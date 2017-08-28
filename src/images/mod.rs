@@ -54,6 +54,7 @@ struct Image {
     image_type: String,
     os: String,
     origin: Option<Uuid>,
+    #[serde(default = "empty_files")]
     files: Vec<ImageFile>,
     published_at: Option<DateTime<Utc>>,
     public: bool,
@@ -249,4 +250,8 @@ pub fn import(config: &Config, uuid: Uuid) -> Result<i32, Box<Error>> {
     };
     serde_json::to_writer(cfg_file, &manifest)?;
     Ok(0)
+}
+
+fn empty_files() -> Vec<ImageFile> {
+    Vec::new()
 }
