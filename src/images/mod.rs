@@ -22,6 +22,22 @@ use flate2::read::GzDecoder;
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+struct ManifestWrapper {
+    zpool: String,
+    manifest: Image
+}
+
+impl ManifestWrapper {
+    pub fn from_reader<R>(reader: R) -> Result<Self, Box<Error>>
+        where
+        R: Read,
+    {
+        let manifest: ManifestWrapper = serde_json::from_reader(reader)?;
+        return Ok(manifest);
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 struct ImageFile {
     size: u64,
     compression: String,
@@ -118,8 +134,8 @@ pub fn list(config: &Config) -> Result<i32, Box<Error>> {
     for entry in fs::read_dir(config.settings.image_dir.clone())? {
         let entry = entry?;
         let image_file = File::open(entry.path())?;
-        let image = Image::from_reader(image_file)?;
-        images.push(image);
+        let manifest = ManifestWrapper::from_reader(image_file)?;
+        images.push(manifest.manifest);
     }
     print_images(images, false, false);
     Ok(0)
@@ -141,8 +157,8 @@ pub fn get(config: &Config, uuid: Uuid) -> Result<i32, Box<Error>> {
     debug!("Get image"; "dir" => config.settings.image_dir.clone(),
            "uuid" => uuid_str.clone(), "filer" => file_name.clone());
     let file = File::open(file_name)?;
-    let image = Image::from_reader(file)?;
-    let j = serde_json::to_string_pretty(&image)?;
+    let manifest = ManifestWrapper::from_reader(file)?;
+    let j = serde_json::to_string_pretty(&manifest.manifest)?;
     println!("{}\n", j);
     //print_images(images, false, false);
     Ok(0)
@@ -182,7 +198,7 @@ pub fn import(config: &Config, uuid: Uuid) -> Result<i32, Box<Error>> {
            "uuid" => uuid_str.clone(), "url" => url.clone());
     let resp = reqwest::get(url.as_str())?;
     let image = Image::from_reader(resp)?;
-    
+
     match image.origin {
         None => (),
         Some(origin) => {
@@ -222,6 +238,10 @@ pub fn import(config: &Config, uuid: Uuid) -> Result<i32, Box<Error>> {
     cfg_path.push_str(".json");
     println!("Writing manifest file: {}", cfg_path);
     let cfg_file = File::create(cfg_path)?;
-    serde_json::to_writer(cfg_file, &image)?;
+    let manifest = ManifestWrapper{
+        manifest: image,
+        zpool: config.settings.pool.clone()
+    };
+    serde_json::to_writer(cfg_file, &manifest)?;
     Ok(0)
 }
