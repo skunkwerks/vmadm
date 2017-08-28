@@ -55,7 +55,7 @@ struct Image {
     os: String,
     origin: Option<Uuid>,
     files: Vec<ImageFile>,
-    published_at: DateTime<Utc>,
+    published_at: Option<DateTime<Utc>>,
     public: bool,
     state: String,
     disabled: bool,
@@ -78,7 +78,12 @@ impl Image {
         return Ok(images);
     }
     fn print(&self, table: &mut Table, parsable: bool) {
-        let date = format!("{}", self.published_at.format("%Y-%m-%d"));
+
+        let date = match self.published_at{
+            Some(published_at) =>
+                format!("{}", published_at.format("%Y-%m-%d")),
+            _ => String::from("-")
+        };
         if parsable {
             println!(
                 "{}:{}:{}:{}:{}:{}",
