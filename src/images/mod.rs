@@ -240,6 +240,8 @@ pub fn import(config: &Config, uuid: Uuid) -> Result<i32, Box<Error>> {
     }
     let mut cfg_path = config.settings.image_dir.clone();
     cfg_path.push('/');
+    cfg_path.push_str(config.settings.pool.replace("/", "-").as_str());
+    cfg_path.push('-');
     cfg_path.push_str(uuid_str.as_str());
     cfg_path.push_str(".json");
     println!("Writing manifest file: {}", cfg_path);
