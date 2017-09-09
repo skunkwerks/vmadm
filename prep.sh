@@ -23,7 +23,7 @@ fi
 
 if [ -z "$2" ]
 then
-    VSN=11.0-RELEASE
+    VSN=`uname -r`
 else
     VSN=$2
 fi
