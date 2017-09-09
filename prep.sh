@@ -4,10 +4,14 @@
 declare -a DIRS=("bin" "dev" "mnt" "proc" "tmp" "etc/defaults")
 declare -a EXECS=("COPYRIGHT" "/libexec/ld-elf.so.1" "bin/sh" "/sbin/ifconfig" "/sbin/route" "usr/sbin/jail")
 ARCH=$(uname -m)
+URL_ARCH=${ARCH};
 
 case "${ARCH}" in
     amd64)
-        ARCH=x86_64
+        ARCH=x86_64;
+        ;;
+    arm64)
+        URL_ARCH=arm64/aarch64
         ;;
 esac
 
@@ -61,7 +65,7 @@ done
 >&2 echo "Prepping solitary confinement"
 mkdir -p /${ROOT}/${ID}/root/jail
 TARGET=/tmp/base-${ARCH}-${VSN}.tgz
-fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/${ARCH}/${VSN}/base.txz -o ${TARGET}
+fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/${URL_ARCH}/${VSN}/base.txz -o ${TARGET}
 tar -xf ${TARGET} -C /${ROOT}/${ID}/root/jail/
 
 zfs snapshot ${ROOT}/${ID}@final
