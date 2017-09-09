@@ -15,6 +15,13 @@ case "${ARCH}" in
         ;;
 esac
 
+if [ -x /usr/local/bin/pbzip2 ]
+then
+    BZIP=/usr/local/bin/pbzip2
+else
+    BZIP=bzip2
+fi
+
 
 #### End user editable vars
 
@@ -65,12 +72,18 @@ done
 >&2 echo "Prepping solitary confinement"
 mkdir -p /${ROOT}/${ID}/root/jail
 TARGET=/tmp/base-${ARCH}-${VSN}.tgz
-fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/${URL_ARCH}/${VSN}/base.txz -o ${TARGET}
+if [ ! -f ${TARGET} ]
+then
+    fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/${URL_ARCH}/${VSN}/base.txz -o ${TARGET}
+else
+    echo "Image seems to already exist, not re-downloading, delete ${TARGET} to force re-download"
+fi
+
 tar -xf ${TARGET} -C /${ROOT}/${ID}/root/jail/
 
 zfs snapshot ${ROOT}/${ID}@final
 
-zfs send ${ROOT}/${ID}@final | bzip > ${ID}.dataset
+zfs send ${ROOT}/${ID}@final | ${BZIP} > ${ID}.dataset
 
 SIZE=`ls -l ${ID}.dataset | cut -f 5 -w`
 SHA=`sha1 -q ${ID}.dataset`
