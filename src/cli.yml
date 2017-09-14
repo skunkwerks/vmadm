@@ -13,6 +13,7 @@ args:
         conflicts_with:
             list
 subcommands:
+
     - list:
         about: lists jails
         args:
@@ -79,6 +80,8 @@ subcommands:
                 help: UUID if the jail to get
                 index: 1
                 required: true
+    - config:
+        about: gets hypervisor configuration
     - info:
         about: gets a info for a hardware virtualized vm
         args:

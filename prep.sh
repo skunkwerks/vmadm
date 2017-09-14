@@ -93,7 +93,7 @@ cat <<EOF > $ID.json
   "v": 2,
   "uuid": "${ID}",
   "name": "FreeBSD",
-  "version": "10.2",
+  "version": "${VSN}",
   "type": "jail-dataset",
   "os": "freebsd",
   "files": [

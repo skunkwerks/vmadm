@@ -187,6 +187,8 @@ fn run() -> i32 {
             ("info", Some(info_matches)) => info(&config, info_matches),
             ("console", Some(console_matches)) => console(&config, console_matches),
             ("images", Some(image_matches)) => images(&config, image_matches),
+            ("config", Some(config_matches)) => hv_config(&config, config_matches),
+
             ("", None) => {
                 help_app.print_help().unwrap();
                 println!();
@@ -266,7 +268,7 @@ fn info(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
     let db = JDB::open(conf)?;
     let uuid_string = value_t!(matches, "uuid", String).unwrap();
     let uuid = Uuid::parse_str(uuid_string.as_str()).unwrap();
-    debug!("Starting jail {}", uuid.hyphenated());
+    debug!("Getting jail info {}", uuid.hyphenated());
     match db.get(&uuid) {
         Err(e) => Err(e),
         Ok(_jail) => {
@@ -274,6 +276,21 @@ fn info(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
             Ok(0)
         }
     }
+}
+
+#[derive(Serialize)]
+struct Info {
+    networks: Vec<String>
+}
+
+fn hv_config(conf: &Config, _matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
+    let info = Info{
+        networks: conf.settings.networks.keys().map(|v| v.clone()).collect::<Vec<String>>()
+    };
+    debug!("Getting hypervisor info.");
+    let j = serde_json::to_string_pretty(&info)?;
+    println!("{}\n", j);
+    Ok(0)
 }
 
 fn console(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
