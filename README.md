@@ -35,8 +35,29 @@ ifconfig_bridge0="addm em0"
 
 
 ### vnet
-vnet needs to be enabled in the kerne.
+In order to have vnet enabled in the kernel, you will probably need to build a new one.
 
+If you have installed the src distribution, the following steps provide a suggested method to rebuild the kernel with new options.
+```
+cd /usr/src/sys/amd64/conf
+cat > FIFOKERNEL <<EOL
+include GENERIC
+ident FIFOKERNEL
+
+nooptions       SCTP   # Stream Control Transmission Protocol
+options         VIMAGE # VNET/Vimage support
+options         RACCT  # Resource containers
+options         RCTL   # same as above
+EOL
+
+
+cd /usr/src
+make -j4 buildkernel KERNCONF=FIFOKERNEL
+make -j4 installkernel KERNCONF=FIFOKERNEL
+reboot
+```
+
+It is also possible to compile a kernel from the current development branch. For that and more, please consult the FreeBSD Handbook.
 
 ### rctrl
 
