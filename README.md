@@ -58,7 +58,7 @@ Some of the steps above require a reboot, there is however no reason not just do
 
 ## installation
 
-1. Install rust (https://rustup.rs/) and cargo: `pkg install rust cargo`
+1. Install rust (https://rustup.rs/) and cargo: `pkg install rust cargo pkgconf openssl`
 2. Clone this repository using Git or download it as a Zip archive
 3. Build the vmadm binary: `cargo build --release`
 4. Copy the executable: `cp target/release/vmadm /usr/local/sbin`
