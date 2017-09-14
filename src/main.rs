@@ -258,7 +258,7 @@ fn get(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
         Err(e) => Err(e),
         Ok(Jail { config: conf, .. }) => {
             let j = serde_json::to_string_pretty(&conf)?;
-            println!("{}\n", j);
+            println!("{}", j);
             Ok(0)
         }
     }
@@ -289,7 +289,7 @@ fn hv_config(conf: &Config, _matches: &clap::ArgMatches) -> Result<i32, Box<Erro
     };
     debug!("Getting hypervisor info.");
     let j = serde_json::to_string_pretty(&info)?;
-    println!("{}\n", j);
+    println!("{}", j);
     Ok(0)
 }
 
