@@ -209,7 +209,18 @@ fn run() -> i32 {
     }
 }
 
-fn startup(_conf: &Config) -> Result<i32, Box<Error>> {
+fn startup(conf: &Config) -> Result<i32, Box<Error>> {
+    let db = JDB::open(conf)?;
+    for e in db.iter() {
+        let jail = db.get(&e.uuid)?;
+        if jail.config.autoboot && jail.outer.is_none() {
+            println!("Starting jail {}", jail.idx.uuid);
+            jail.start(conf)?;
+        } else {
+            println!("Skipping startup for jail {}", jail.idx.uuid);
+
+        }
+    };
     Ok(0)
 }
 
