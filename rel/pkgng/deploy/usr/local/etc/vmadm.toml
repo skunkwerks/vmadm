@@ -1,0 +1,5 @@
+pool = "zroot/jails"
+repo = "http://bsd.project-fifo.net/images"
+
+[networks]
+admin = "bridge0"

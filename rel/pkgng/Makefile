@@ -8,9 +8,7 @@ include pkgng.mk
 .PHONY: prepare
 
 prepare:
-	-rm -r $(STAGE_DIR)
 	mkdir -p $(STAGE_DIR)/$(INSTALL_DIR)
-	mkdir -p $(STAGE_DIR)/usr/local/etc
 	mkdir -p $(STAGE_DIR)/usr/local/vmadm
 	mkdir -p $(STAGE_DIR)/var/imgadm/images
 	cp -r ../../target/release/vmadm $(STAGE_DIR)/$(INSTALL_DIR)
