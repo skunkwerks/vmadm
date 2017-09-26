@@ -1,3 +1,5 @@
 test:
     script:
     - cargo test
+    tags:
+    - bsd
