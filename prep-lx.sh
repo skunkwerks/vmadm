@@ -1,5 +1,7 @@
 #!/usr/local/bin/bash
 #set -x
+declare -a DIRS=("bin" "dev" "mnt" "proc" "tmp" "etc/defaults")
+declare -a EXECS=("COPYRIGHT" "/libexec/ld-elf.so.1" "bin/sh" "/sbin/ifconfig" "/sbin/route" "usr/sbin/jail")
 
 
 ARCH=$(uname -m)
@@ -52,6 +54,22 @@ do
     chown root:wheel /${ROOT}/$ID/root/$d
     chmod 775 /${ROOT}/$ID/root/$d
 done
+
+cp /etc/defaults/devfs.rules /${ROOT}/$ID/root/etc/defaults
+
+for e in "${EXECS[@]}"
+do
+    FILES=("${FILES[@]}" $(ldd -a /$e 2> /dev/null | awk '/=>/{print $(NF-1)}'))
+    FILES=("${FILES[@]}" "$e")
+done
+
+for f in "${FILES[@]}"
+do
+    mkdir -p /${ROOT}/$ID/root/$(dirname $f)
+    cp /$f /${ROOT}/$ID/root/$f
+done
+
+
 
 # Write some basic CentOS configuration files:
 cp /etc/resolv.conf /${ROOT}/$ID/root/etc/resolv.conf

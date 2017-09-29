@@ -1,8 +1,7 @@
 {
     "cpu_cap": 100,
-    "image_uuid": "91ba9d4d-a54c-11e7-aac0-f1a39030aaa2",
+    "image_uuid": "bb4bada0-a556-11e7-aac0-f1a39030aaa2",
     "hostname": "lx-jail00",
-    "uuid": "81ba9d4d-a54c-11e7-aac0-f1a39030aaa2",
     "max_physical_memory": 1024,
     "quota": 100,
     "brand": "lx-jail",
