@@ -44,3 +44,15 @@ bsd:
     refs:
       - master
       - dev
+
+
+bsd_test:
+  stage: test
+  script:
+    - cargo test
+  tags:
+    - bsd
+  except:
+    - pipelines
+    - master
+    - dev
