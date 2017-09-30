@@ -10,9 +10,11 @@ URL_ARCH=${ARCH};
 case "${ARCH}" in
     amd64)
         ARCH=x86_64;
+        ARCH_URL=x86;
         ;;
     arm64)
-        URL_ARCH=arm64/aarch64
+        echo only x86 is supported
+        exit 1
         ;;
 esac
 
@@ -35,7 +37,7 @@ fi
 
 if [ -z "$2" ]
 then
-    VSN=`uname -r`
+    VSN=6
 else
     VSN=$2
 fi
@@ -69,20 +71,12 @@ do
     cp /$f /${ROOT}/$ID/root/$f
 done
 
-
-
-# Write some basic CentOS configuration files:
-cp /etc/resolv.conf /${ROOT}/$ID/root/etc/resolv.conf
-echo "linproc /jails/centos/proc linprocfs rw 0 0" >> /${ROOT}/$ID/fstab_centos6
-
-
-
 >&2 echo "Prepping solitary confinement"
 mkdir -p /${ROOT}/${ID}/root/jail
 TARGET=/tmp/centos-${ARCH}-${VSN}.tgz
 if [ ! -f ${TARGET} ]
 then
-    fetch  https://download.openvz.org/template/precreated/centos-6-x86.tar.gz -o ${TARGET}
+    fetch  https://download.openvz.org/template/precreated/centos-${VNS}-${ARCH_URL}.tar.gz -o ${TARGET}
 else
     echo "Image seems to already exist, not re-downloading, delete ${TARGET} to force re-download"
 fi
@@ -100,7 +94,7 @@ cat <<EOF > $ID.json
 {
   "v": 2,
   "uuid": "${ID}",
-  "name": "FreeBSD",
+  "name": "CentOS",
   "version": "${VSN}",
   "type": "lx-jail-dataset",
   "os": "Linux",
