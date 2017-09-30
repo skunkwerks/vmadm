@@ -63,13 +63,12 @@ impl<'a> Jail<'a> {
     /// starts a jail
     pub fn start(&self, config: &Config) -> Result<i32, Box<Error>> {
         self.set_rctl()?;
+        self.mount_devfs_lx()?;
         
-        if self.config.brand != "lx-jail" {
-            self.mount_devfs_lx()?;
-        } else {
-            self.mount_devfs()?;
+        if self.config.brand == "lx-jail" {
+            self.mount_lxfs()?;
         }
-
+        
         let CreateArgs { args, ifs } = create_args(config, self)?;
         debug!("Start jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" => args.clone().join(" "));
         let id = start_jail(&self.idx.uuid, args)?;
@@ -205,38 +204,7 @@ impl<'a> Jail<'a> {
 
         Ok(0)
     }
-    fn mount_devfs_lx(&self) -> Result<i32, Box<Error>> {
-        
-        let mut devfs = String::from("/");
-        devfs.push_str(self.idx.root.as_str());
-        devfs.push_str("/root/dev");
-        let devfs_args = vec!["-t", "devfs", "devfs", devfs.as_str()];
-
-        debug!("mounting devfs in outer jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>devfs_args.clone().join(" "));
-        let output = Command::new(MOUNT).args(devfs_args).output().expect(
-            "failed to mount devfs in outer jail",
-        );
-
-        if !output.status.success() {
-            crit!("failed to mount ounter devfs"; "vm" => self.idx.uuid.hyphenated().to_string());
-            return Err(GenericError::bx("Could mount outer devfs"));
-        }
-
-        let mut devfs = String::from("/");
-        devfs.push_str(self.idx.root.as_str());
-        devfs.push_str("/root/jail/dev");
-        let devfs_args = vec!["-t", "devfs", "devfs", devfs.as_str()];
-
-        debug!("mounting devfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>devfs_args.clone().join(" "));
-        let output = Command::new(MOUNT).args(devfs_args).output().expect(
-            "failed to mount devfs in inner jail",
-        );
-        if !output.status.success() {
-            crit!("failed to mount inner devfs"; "vm" => self.idx.uuid.hyphenated().to_string());
-            return Err(GenericError::bx("Could not remove resource limits"));
-        }
-
-
+    fn mount_lxfs(&self) -> Result<i32, Box<Error>> {
         
         let mut linprocfs = String::from("/");
         linprocfs.push_str(self.idx.root.as_str());
@@ -266,8 +234,7 @@ impl<'a> Jail<'a> {
             return Err(GenericError::bx("Could not remove resource limits"));
         }
         
-            Ok(0)
-
+        Ok(0)
     }
 
     fn remove_rctl(&self) -> Result<i32, Box<Error>> {
