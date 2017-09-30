@@ -64,6 +64,11 @@ impl<'a> Jail<'a> {
     pub fn start(&self, config: &Config) -> Result<i32, Box<Error>> {
         self.set_rctl()?;
         self.mount_devfs()?;
+        
+        if self.config.brand == "lx-jail" {
+            self.mount_lxfs()?;
+        }
+        
         let CreateArgs { args, ifs } = create_args(config, self)?;
         debug!("Start jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" => args.clone().join(" "));
         let id = start_jail(&self.idx.uuid, args)?;
@@ -197,6 +202,38 @@ impl<'a> Jail<'a> {
             return Err(GenericError::bx("Could not remove resource limits"));
         }
 
+        Ok(0)
+    }
+    fn mount_lxfs(&self) -> Result<i32, Box<Error>> {
+        
+        let mut linprocfs = String::from("/");
+        linprocfs.push_str(self.idx.root.as_str());
+        linprocfs.push_str("/root/jail/proc");
+        let linprocfs_args = vec!["-t", "linprocfs", "linprocfs", linprocfs.as_str()];
+
+        debug!("mounting linprocfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>linprocfs_args.clone().join(" "));
+        let output = Command::new(MOUNT).args(linprocfs_args).output().expect(
+            "failed to mount linprocfs in inner jail",
+        );
+        if !output.status.success() {
+            crit!("failed to mount inner linprocfs"; "vm" => self.idx.uuid.hyphenated().to_string());
+            return Err(GenericError::bx("Could not remove resource limits"));
+        }
+        
+        let mut linsysfs = String::from("/");
+        linsysfs.push_str(self.idx.root.as_str());
+        linsysfs.push_str("/root/jail/sys");
+        let linsysfs_args = vec!["-t", "linsysfs", "linsysfs", linsysfs.as_str()];
+
+        debug!("mounting linsysfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>linsysfs_args.clone().join(" "));
+        let output = Command::new(MOUNT).args(linsysfs_args).output().expect(
+            "failed to mount linsysfs in inner jail",
+        );
+        if !output.status.success() {
+            crit!("failed to mount inner linsysfs"; "vm" => self.idx.uuid.hyphenated().to_string());
+            return Err(GenericError::bx("Could not remove resource limits"));
+        }
+        
         Ok(0)
     }
 
