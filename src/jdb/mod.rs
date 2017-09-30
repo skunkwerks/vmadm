@@ -273,6 +273,14 @@ impl<'a> JDB<'a> {
             Some(jail) => jail.id,
             _ => 0,
         };
+        let os = match conf.brand.as_str() {
+            "jail" => "OS",
+            "lx-jail" => "LX",
+            brand => {
+                warn!("Unknown brand: {}.", brand);
+                "OS"
+            }
+        };
         let state = match id {
             0 => &entry.state,
             _ => "running",
@@ -281,7 +289,7 @@ impl<'a> JDB<'a> {
             println!(
                 "{}:{}:{}:{}:{}",
                 conf.uuid,
-                "OS",
+                os,
                 conf.max_physical_memory,
                 state,
                 conf.alias
@@ -289,7 +297,7 @@ impl<'a> JDB<'a> {
         } else {
             table.add_row(Row::new(vec![
                 Cell::new(conf.uuid.hyphenated().to_string().as_str()),
-                Cell::new("OS"),
+                Cell::new(os),
                 Cell::new(conf.max_physical_memory.to_string().as_str()),
                 Cell::new(state),
                 Cell::new(conf.alias.as_str()),
