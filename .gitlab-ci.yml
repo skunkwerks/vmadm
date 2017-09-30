@@ -40,20 +40,13 @@ bsd:
   tags:
     - erlang-19
     - freebsd-11.0
-    - sync
   only:
     refs:
       - master
       - dev
 
-
-bsd_test:
+test:
+  image rust:latest
   stage: test
   script:
     - cargo test
-  tags:
-    - bsd
-  except:
-    - pipelines
-    - master
-    - dev
