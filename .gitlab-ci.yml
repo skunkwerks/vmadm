@@ -1,5 +1,6 @@
 ### Generic cli file for services
 stages:
+  - test
   - package  # verify package creation
 
 ################################################################################
