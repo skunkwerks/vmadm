@@ -120,6 +120,35 @@ impl<'a> Jail<'a> {
             crit!("failed to mount devfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string());
         }
     }
+    
+    fn umount_lxfs(&self) {
+        let mut linprocfs = String::from("/");
+        linprocfs.push_str(self.idx.root.as_str());
+        linprocfs.push_str("/root/jail/proc");
+        let linprocfs_args = vec![linprocfs.as_str()];
+
+        debug!("un mounting linprocfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>linprocfs_args.clone().join(" "));
+        let output = Command::new(UMOUNT).args(linprocfs_args).output().expect(
+            "failed to unmount linprocfs in inner jail",
+        );
+        if !output.status.success() {
+            crit!("failed to unmount linprocs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string());
+        }
+        let mut linsysfs = String::from("/");
+        linsysfs.push_str(self.idx.root.as_str());
+        linsysfs.push_str("/root/jail/sys");
+        let linsysfs_args = vec![linsysfs.as_str()];
+
+        debug!("un mounting linsysfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>linsysfs_args.clone().join(" "));
+        let output = Command::new(UMOUNT).args(linsysfs_args).output().expect(
+            "failed to unmount linsysfs in inner jail",
+        );
+        if !output.status.success() {
+            crit!("failed to unmount linsysfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string());
+        }
+    }
+
+    
 
     /// stops a jail
     pub fn stop(&self) -> Result<i32, Box<Error>> {
@@ -134,6 +163,11 @@ impl<'a> Jail<'a> {
         }
 
         let _ = self.umount_devfs();
+        
+        if self.config.brand == "lx-jail" {   
+            let _ = self.umount_lxfs();
+        }
+        
         let _ = self.remove_rctl();
         match self.outer {
             Some(outer) => {
