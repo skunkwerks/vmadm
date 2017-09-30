@@ -93,18 +93,7 @@ impl<'a> Jail<'a> {
         Ok(0)
     }
 
-    /// stops a jail
-    pub fn stop(&self) -> Result<i32, Box<Error>> {
-        debug!("Dleting jail"; "vm" => self.idx.uuid.hyphenated().to_string());
-        let output = Command::new(JAIL)
-            .args(&["-r", self.idx.uuid.hyphenated().to_string().as_str()])
-            .output()
-            .expect("zfs list failed");
-        if !output.status.success() {
-            crit!("Failed to stop jail"; "vm" => self.idx.uuid.hyphenated().to_string());
-            return Err(GenericError::bx("Could not stop jail"));
-        }
-
+    fn umount_devfs(&self) {
         let mut devfs = String::from("/");
         devfs.push_str(self.idx.root.as_str());
         devfs.push_str("/root/dev");
@@ -130,7 +119,21 @@ impl<'a> Jail<'a> {
         if !output.status.success() {
             crit!("failed to mount devfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string());
         }
+    }
 
+    /// stops a jail
+    pub fn stop(&self) -> Result<i32, Box<Error>> {
+        debug!("Dleting jail"; "vm" => self.idx.uuid.hyphenated().to_string());
+        let output = Command::new(JAIL)
+            .args(&["-r", self.idx.uuid.hyphenated().to_string().as_str()])
+            .output()
+            .expect("jail stop failed");
+        if !output.status.success() {
+            crit!("Failed to stop jail"; "vm" => self.idx.uuid.hyphenated().to_string());
+            return Err(GenericError::bx("Could not stop jail"));
+        }
+
+        let _ = self.umount_devfs();
         let _ = self.remove_rctl();
         match self.outer {
             Some(outer) => {
