@@ -46,7 +46,7 @@ bsd:
       - dev
 
 test:
-  image rust:latest
+  image: rust:latest
   stage: test
   script:
     - cargo test
