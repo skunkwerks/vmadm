@@ -63,7 +63,7 @@ impl<'a> Jail<'a> {
     /// starts a jail
     pub fn start(&self, config: &Config) -> Result<i32, Box<Error>> {
         self.set_rctl()?;
-        self.mount_devfs_lx()?;
+        self.mount_devfs()?;
         
         if self.config.brand == "lx-jail" {
             self.mount_lxfs()?;
