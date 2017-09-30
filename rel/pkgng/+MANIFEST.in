@@ -1,0 +1,8 @@
+name: vmadm
+version: "__VNS__"
+origin: projectfifo/vmadm
+comment: "fifo bsd jail control tool"
+desc: "fifo bsd jail control tool"
+maintainer: info@project-fifo.net
+www: https://project-fifo.net
+prefix: /

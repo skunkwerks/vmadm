@@ -79,7 +79,7 @@ Some of the steps above require a reboot, there is however no reason not just do
 
 ## installation
 
-1. Install rust (https://rustup.rs/) and cargo: `pkg install rust cargo`
+1. Install rust (https://rustup.rs/) and cargo: `pkg install rust cargo pkgconf openssl` 
 2. Clone this repository using Git or download it as a Zip archive
 3. Build the vmadm binary: `cargo build --release`
 4. Copy the executable: `cp target/release/vmadm /usr/local/sbin`
@@ -89,6 +89,7 @@ Some of the steps above require a reboot, there is however no reason not just do
 8. Import a dataset using `vmadm images avail` and `vmadm images import`.
 9. Create a jail: `cat example.json | vmadm create`
 
+Note if you plan to run linux jails you need to load the linux kernel module: `kldload linux fdescfs linprocfs linsysfs tmpfs`
 
 The devfs ruleset to used can be adjusted in the `/usr/local/etc/vmadm.toml` by adding `devfs_ruleset = <rule number>`.
 
@@ -135,3 +136,12 @@ SUBCOMMANDS:
 ```
 
 Travis CI scripts form: https://github.com/japaric/trust
+
+## tricks
+
+Make it feel more SmartOS'ish:
+
+```
+alias zlogin vmadm console
+alias imgadm vmadm images
+```

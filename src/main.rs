@@ -209,7 +209,18 @@ fn run() -> i32 {
     }
 }
 
-fn startup(_conf: &Config) -> Result<i32, Box<Error>> {
+fn startup(conf: &Config) -> Result<i32, Box<Error>> {
+    let db = JDB::open(conf)?;
+    for e in db.iter() {
+        let jail = db.get(&e.uuid)?;
+        if jail.config.autoboot && jail.outer.is_none() {
+            println!("Starting jail {}", jail.idx.uuid);
+            jail.start(conf)?;
+        } else {
+            println!("Skipping startup for jail {}", jail.idx.uuid);
+
+        }
+    };
     Ok(0)
 }
 
@@ -258,7 +269,7 @@ fn get(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
         Err(e) => Err(e),
         Ok(Jail { config: conf, .. }) => {
             let j = serde_json::to_string_pretty(&conf)?;
-            println!("{}\n", j);
+            println!("{}", j);
             Ok(0)
         }
     }
@@ -289,7 +300,7 @@ fn hv_config(conf: &Config, _matches: &clap::ArgMatches) -> Result<i32, Box<Erro
     };
     debug!("Getting hypervisor info.");
     let j = serde_json::to_string_pretty(&info)?;
-    println!("{}\n", j);
+    println!("{}", j);
     Ok(0)
 }
 

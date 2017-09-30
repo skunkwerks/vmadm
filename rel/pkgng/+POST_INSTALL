@@ -1,0 +1,14 @@
+#!/bin/sh
+
+CONFFILE="/usr/local/etc/vmadm.toml"
+if [ ! -f $CONFFILE ]
+then
+    echo "Creating new configuration from example file."
+    cat <<EOF > $CONFFILE
+pool = "zroot/jails"
+[networks]
+admin = "bridge0"
+EOF
+else
+    echo "Please make sure you update your config according to the update manual!"
+fi

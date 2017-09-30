@@ -1,0 +1,19 @@
+{
+    "cpu_cap": 100,
+    "image_uuid": "bb4bada0-a556-11e7-aac0-f1a39030aaa2",
+    "hostname": "lx-jail00",
+    "max_physical_memory": 1024,
+    "quota": 100,
+    "brand": "lx-jail",
+    "alias": "test",
+    "nics": [
+        {
+            "interface": "net0",
+            "nic_tag": "admin",
+            "gateway": "192.168.1.1",
+            "netmask": "255.255.255.0",
+            "ip": "192.168.1.235",
+            "primary": true
+        }
+    ]
+}

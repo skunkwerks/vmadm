@@ -88,7 +88,7 @@ pub struct JailUpdate {
     /// hostname of the jail
     hostname: Option<String>,
     /// weather to start this jail on --startup
-    autostart: Option<bool>,
+    autoboot: Option<bool>,
     /// max physical memory in MB (memoryuse)
     max_physical_memory: Option<u64>,
     /// mac cpu usage 100 = 1 core (pcpu)
@@ -137,7 +137,7 @@ impl JailUpdate {
         JailUpdate {
             alias: None,
             hostname: None,
-            autostart: None,
+            autoboot: None,
             max_physical_memory: None,
             cpu_cap: None,
             max_shm_memory: None,
@@ -159,13 +159,13 @@ impl JailUpdate {
     pub fn apply(&self, config: JailConfig) -> JailConfig {
         let mut c = config.clone();
         update!(self, c;
-            autostart,
-            alias,
-            hostname,
-            max_physical_memory,
-            cpu_cap,
-            max_lwps,
-            dns_domain
+                autoboot,
+                alias,
+                hostname,
+                max_physical_memory,
+                cpu_cap,
+                max_lwps,
+                dns_domain
         );
         update_option!(self, c;
             max_shm_memory,
@@ -275,7 +275,7 @@ mod tests {
             image_uuid: Uuid::nil(),
             alias: String::from("test-alias"),
             hostname: String::from("test-hostname"),
-            autostart: true,
+            autoboot: true,
             max_physical_memory: 1024,
             cpu_cap: 100,
             quota: 5,
@@ -324,12 +324,12 @@ mod tests {
         assert_eq!(hostname, update.apply(conf).hostname);
     }
     #[test]
-    fn autostart() {
+    fn autoboot() {
         let conf = conf();
-        assert_eq!(true, conf.autostart);
+        assert_eq!(true, conf.autoboot);
         let mut update = JailUpdate::empty();
-        update.autostart = Some(false);
-        assert_eq!(false, update.apply(conf).autostart);
+        update.autoboot = Some(false);
+        assert_eq!(false, update.apply(conf).autoboot);
     }
     #[test]
     fn max_physical_memory() {

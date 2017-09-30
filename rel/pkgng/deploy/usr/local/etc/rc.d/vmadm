@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: vmadm
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+
+
+. /etc/rc.subr
+
+name="vmadm"
+rcvar=vmadm_enable
+
+load_rc_config $name
+: ${vmadm_enable="NO"}
+
+
+start_cmd="${name}_start"
+stop_cmd="${name}_stop"
+
+
+
+vmadm_start()
+{
+	if checkyesno ${rcvar}; then
+		echo "* starting fifo vmadm... "
+		/usr/local/sbin/vmadm --startup
+	fi
+}
+
+vmadm_stop()
+{
+	if checkyesno ${rcvar}; then
+		echo "* stoping fifo vmadm... "
+	fi
+}
+
+run_rc_command "$1"

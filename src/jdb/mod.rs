@@ -7,6 +7,7 @@ use std::path::PathBuf;
 use std::str;
 use std::cmp::PartialEq;
 use std::collections::HashMap;
+use std::slice::Iter;
 
 use prettytable::Table;
 use prettytable::format;
@@ -233,7 +234,13 @@ impl<'a> JDB<'a> {
     /// Finds an entry for a given uuid
     fn find(self: &'a JDB<'a>, uuid: &Uuid) -> Option<usize> {
         self.index.entries.iter().position(|x| x.uuid == *uuid)
+
     }
+    /// Iterator over index entries
+    pub fn iter(self: &'a JDB<'a>) -> Iter<'a, IdxEntry> {
+        self.index.entries.iter()
+    }
+
     /// Prints the jdb database
     pub fn print(self: &'a JDB<'a>, headerless: bool, parsable: bool) -> Result<i32, Box<Error>> {
         let mut table = Table::new();
@@ -245,7 +252,7 @@ impl<'a> JDB<'a> {
                 table.add_row(row!["UUID", "TYPE", "RAM", "STATE", "ALIAS"]);
             }
         }
-        for e in &(self.index.entries) {
+        for e in self.iter() {
             self.print_entry(e, &mut table, parsable)?;
         }
         if !parsable {

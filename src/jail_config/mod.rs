@@ -206,7 +206,7 @@ pub struct JailConfig {
 
     /// weather to start this jail on --startup
     #[serde(default = "dflt_false")]
-    pub autostart: bool,
+    pub autoboot: bool,
 
     // Resources
     /// max physical memory in MB (memoryuse)
@@ -277,7 +277,7 @@ impl PartialEq for JailConfig {
             self.image_uuid == other.image_uuid &&
             self.alias == other.alias &&
             self.hostname == other.hostname &&
-            self.autostart == other.autostart &&
+            self.autoboot == other.autoboot &&
             self.max_physical_memory == other.max_physical_memory &&
             self.cpu_cap == other.cpu_cap &&
             self.quota == other.quota &&
