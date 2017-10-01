@@ -4,6 +4,7 @@
 . ../shared/utils.sh
 
 jail_root="$1"
+brand_root="$2"
 
 validate_root "${jail_root}"
 
@@ -41,6 +42,11 @@ do
     echo mkdir -p ${jail_root}/root$(dirname ${file})
     echo cp ${file} ${jail_root}/root${file}
 done
+
+# install the branch information
+
+echo mkdir -p ${jail_root}/root$(dirname ${brand_root})
+echo cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})
 
 #TODO: network config:
 # * get resolvers and set them resolvers

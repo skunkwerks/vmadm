@@ -1,0 +1,20 @@
+#!/bin/sh
+
+# include shared utility functions
+. ../shared/utils.sh
+jail_root="$1"
+inner_id="$2"
+
+validate_root "${jail_root}"
+
+
+# cleanly shut down the inner jail (should this be run inside the outer jail?)
+if [ ! -z "${inner_id}" ]
+then
+    jexec ${inner_id} /bin/sh /etc/rc.shutdown
+fi
+
+# outer jail
+mount -t devfs devfs ${jail_root}/root/dev
+# inner jail
+mount -t devfs devfs ${jail_root}/root/jail/dev
