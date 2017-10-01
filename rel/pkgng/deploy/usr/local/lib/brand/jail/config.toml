@@ -1,0 +1,28 @@
+# Jail brand configuration
+# All strings act as templates, possbile parameters
+# are:
+#
+# {jexec}      - the jexec binary
+# {jail_id}    - the jail_id (for running jails)
+# {jail_uuid}  - uuid if the jail
+# {jail_root}  - root of the jail
+# {brand_root} - root of this brand
+# {hostname}   - hostname of the jail
+
+modname=jail
+
+[init]
+cmd="{brand_root}/init"
+args=[]
+[login]
+cmd="{jexec}"
+args=["{jail_id}", "/bin/csh"]
+[install]
+cmd="{brand_root}/install"
+args=["{jail_root}"]
+[boot]
+cmd="{brand_root}/boot"
+args=["{jail_uuid}" "{hostname}"]
+[halt]
+cmd="{brand_root}/halt"
+args=["{jail_root}"]

@@ -64,11 +64,11 @@ impl<'a> Jail<'a> {
     pub fn start(&self, config: &Config) -> Result<i32, Box<Error>> {
         self.set_rctl()?;
         self.mount_devfs()?;
-        
+
         if self.config.brand == "lx-jail" {
             self.mount_lxfs()?;
         }
-        
+
         let CreateArgs { args, ifs } = create_args(config, self)?;
         debug!("Start jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" => args.clone().join(" "));
         let id = start_jail(&self.idx.uuid, args)?;
