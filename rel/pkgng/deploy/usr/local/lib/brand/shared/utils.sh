@@ -7,6 +7,10 @@ validate_root () {
         exit 1
     fi
     if echo "$1" | fgrep '..' > /dev/null
+    then
+        echo "invalid path: $1"
+        exit 1
+    fi
     if [ ! -d "$1" ]
     then
         echo "relative path not allowed: $1"

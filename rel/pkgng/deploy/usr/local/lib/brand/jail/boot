@@ -2,12 +2,13 @@
 
 # Note this gets executed INSIDE the outer jail not on the host!
 
+
+brand_root="$1"
+uuid="$2"
+hostname="$3"
+
 # include shared utility functions
-. ../shared/utils.sh
-
-
-uuid="$1"
-hostname="$2"
+. ${brand_root}/../shared/utils.sh
 
 # create
 jail -c persist \

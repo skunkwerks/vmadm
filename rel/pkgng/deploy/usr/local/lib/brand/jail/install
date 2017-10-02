@@ -1,10 +1,11 @@
 #!/bin/sh
 
-# include shared utility functions
-. ../shared/utils.sh
+brand_root="$1"
+jail_root="$2"
 
-jail_root="$1"
-brand_root="$2"
+# include shared utility functions
+. ${brand_root}/../shared/utils.sh
+
 
 validate_root "${jail_root}"
 
@@ -21,9 +22,9 @@ find x/${jail_root}/root \
 dirs="bin dev mnt proc tmp etc/defaults"
 for dir in ${dirs}
 do
-    echo mkdir -p ${jail_root}/root/${dir}
-    echo chown root:wheel ${jail_root}/root/${dir}
-    echo chmod 775 ${jail_root}/root/${dir}
+    mkdir -p ${jail_root}/root/${dir}
+    chown root:wheel ${jail_root}/root/${dir}
+    chmod 775 ${jail_root}/root/${dir}
 done
 
 ## required files:
@@ -39,14 +40,17 @@ done
 ## copy the files in the zone root
 for file in ${files}
 do
-    echo mkdir -p ${jail_root}/root$(dirname ${file})
-    echo cp ${file} ${jail_root}/root${file}
+    mkdir -p ${jail_root}/root$(dirname ${file})
+    cp ${file} ${jail_root}/root${file}
 done
 
 # install the branch information
 
-echo mkdir -p ${jail_root}/root$(dirname ${brand_root})
-echo cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})
+mkdir -p ${jail_root}/root$(dirname ${brand_root})
+cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})
+
+mkdir -p ${jail_root}/root$(dirname ${brand_root})/../shared
+cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})/../shared
 
 #TODO: network config:
 # * get resolvers and set them resolvers

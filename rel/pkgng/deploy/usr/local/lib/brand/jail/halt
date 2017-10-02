@@ -1,9 +1,11 @@
 #!/bin/sh
 
 # include shared utility functions
-. ../shared/utils.sh
-jail_root="$1"
-inner_id="$2"
+brand_root="$1"
+jail_root="$2"
+inner_id="$3"
+
+. ${brand_root}/../shared/utils.sh
 
 validate_root "${jail_root}"
 

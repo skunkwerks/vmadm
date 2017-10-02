@@ -14,25 +14,25 @@ modname="jail"
 # install is executed after cloning
 [install]
 cmd="{brand_root}/install"
-args=["{jail_root}", "{brand_root}"]
+args=["{brand_root}", "{jail_root}"]
 
 # installed before booting (on the host)
 [init]
 cmd="{brand_root}/init"
-args=["{jail_root}", "{brand_root}"]
+args=["{brand_root}", "{jail_root}"]
 
 # executed after booting the outer zone to
 # boot the inner zone
 [boot]
 cmd="{brand_root}/boot"
-args=["{jail_uuid}", "{hostname}"]
+args=["{brand_root}", "{jail_uuid}", "{hostname}"]
 
 # Halt the jail executed on the host before
 # rctl and interfaces are torn down, the outer
 # jail is then shut down
 [halt]
 cmd="{brand_root}/halt"
-args=["{jail_root}", "{inner_id}"]
+args=["{brand_root}", "{jail_root}", "{inner_id}"]
 
 [login]
 cmd="/usr/sbin/jexec"

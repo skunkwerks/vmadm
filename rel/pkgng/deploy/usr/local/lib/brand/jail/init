@@ -1,9 +1,10 @@
 #!/bin/sh
 
+brand_root="$1"
+jail_root="$2"
+
 # include shared utility functions
-. ../shared/utils.sh
-jail_root="$1"
-brand_root="$2"
+. ${brand_root}/../shared/utils.sh
 
 validate_root "${jail_root}"
 
