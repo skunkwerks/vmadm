@@ -108,6 +108,7 @@ pub struct Brand {
     pub init: Step,
     pub boot: Step,
     pub halt: Step,
+    pub halted: Step,
     pub login: Step,
 }
 

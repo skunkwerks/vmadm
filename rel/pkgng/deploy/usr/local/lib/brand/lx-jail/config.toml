@@ -34,6 +34,11 @@ args=["{jail_uuid}", "{hostname}"]
 cmd="{brand_root}/halt"
 args=["{jail_root}", "{inner_id}"]
 
+## called after the outer jail has been stopped
+[halted]
+cmd="{brand_root}/halted"
+args=["{brand_root}", "{jail_root}"]
+
 [login]
 cmd="/usr/sbin/jexec"
 args=["{jail_id}", "/bin/sh"]

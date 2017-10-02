@@ -33,7 +33,6 @@ static JAIL: &'static str = "jail";
 static RCTL: &'static str = "echo";
 #[cfg(not(target_os = "freebsd"))]
 static JAIL: &'static str = "echo";
-
 #[cfg(target_os = "freebsd")]
 static IFCONFIG: &'static str = "/sbin/ifconfig";
 #[cfg(not(target_os = "freebsd"))]
@@ -63,10 +62,6 @@ impl<'a> Jail<'a> {
         let brand = self.brand(config)?;
 
         brand.init.output(self, config).expect("brand init failed");
-        // self.mount_devfs()?;
-        // if self.config.brand == "lx-jail" {
-        //     self.mount_lxfs()?;
-        // }
 
         let CreateArgs { args, ifs } = self.create_args(config)?;
         debug!("Start jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" => args.clone().join(" "));
@@ -108,6 +103,8 @@ impl<'a> Jail<'a> {
             crit!("Failed to stop jail"; "vm" => self.idx.uuid.hyphenated().to_string());
             return Err(GenericError::bx("Could not stop jail"));
         }
+
+        brand.halted.output(self, config).expect("brand halted failed");;
 
         let _ = self.remove_rctl();
         match self.outer {
@@ -223,8 +220,6 @@ impl<'a> Jail<'a> {
         if !self.config.nics.is_empty() {
             exec_start.push_str("/sbin/ifconfig lo0 127.0.0.1 up; ");
         };
-
-        brand.init.output(self, config).expect("brand init failed");
 
         // inner jail configuration
         exec_start.push_str(brand.boot.to_string(self, config).as_str());
