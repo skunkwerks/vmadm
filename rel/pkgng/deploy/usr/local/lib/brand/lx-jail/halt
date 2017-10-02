@@ -22,7 +22,14 @@ fi
 if [ "${distro}" = "redhat" ]
 then
     jexec ${inner_id} /bin/sh /etc/rc.d/rc 0
+elif [ "${distro}" = "ubuntu" ]
+then
+    jexec ${inner_id} /etc/init.d/rc 0
+elif [ "${distro}" = "debian" ]
+then
+    #TODO: is this right?
+    jexec ${inner_id} /etc/init.d/rc 0
 else
-    echo "unsupported distro"
+    echo "Unsupported distro: ${distro}"
     exit 1
 fi

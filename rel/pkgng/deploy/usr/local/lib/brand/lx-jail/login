@@ -15,9 +15,15 @@ distro=$(detect_distro "${jail_root}/root/jail")
 if [ "${distro}" = "redhat" ]
 then
     login_shell='/bin/bash'
+elif [ "${distro}" = "ubuntu" ]
+then
+    login_shell='/bin/bash'
+elif [ "${distro}" = "debian" ]
+then
+    login_shell='/bin/bash'
 else
-    echo "unsupported distro"
-    exit 1
+    echo "Unsupported distro: ${distro}"
+    exit 3
 fi
 
 # cleanly shut down the inner jail (should this be run inside the outer jail?)
