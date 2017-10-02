@@ -79,7 +79,7 @@ Some of the steps above require a reboot, there is however no reason not just do
 
 ## installation
 
-1. Install rust and cargo: `pkg install rust pkgconf openssl` (if cargo is not part of the rust package it might be required to install it seperately `pkg install cargo`) 
+1. Install rust and cargo: `pkg install rust pkgconf openssl ca_root_nss` (if cargo is not part of the rust package it might be required to install it seperately `pkg install cargo`) 
 2. Clone this repository using Git or download it as a Zip archive
 3. Build the vmadm binary: `cargo build --release`
 4. Copy the executable: `cp target/release/vmadm /usr/local/sbin`
