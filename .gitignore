@@ -1,3 +1,4 @@
 target
 *.fmt
 .DS_Store
+.#*

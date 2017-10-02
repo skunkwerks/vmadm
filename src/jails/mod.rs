@@ -1,7 +1,6 @@
 //! Wrapper around the freebsd jail commands
 
 use std::error::Error;
-use std::path::PathBuf;
 use errors::GenericError;
 use std::collections::HashMap;
 use std::process::Command;
@@ -27,17 +26,9 @@ struct CreateArgs {
 }
 
 #[cfg(target_os = "freebsd")]
-static UMOUNT: &'static str = "umount";
-#[cfg(target_os = "freebsd")]
-static MOUNT: &'static str = "mount";
-#[cfg(target_os = "freebsd")]
 static RCTL: &'static str = "rctl";
 #[cfg(target_os = "freebsd")]
 static JAIL: &'static str = "jail";
-#[cfg(not(target_os = "freebsd"))]
-static MOUNT: &'static str = "echo";
-#[cfg(not(target_os = "freebsd"))]
-static UMOUNT: &'static str = "echo";
 #[cfg(not(target_os = "freebsd"))]
 static RCTL: &'static str = "echo";
 #[cfg(not(target_os = "freebsd"))]
@@ -97,61 +88,6 @@ impl<'a> Jail<'a> {
         Ok(0)
     }
 
-    fn umount_devfs(&self) {
-        let mut devfs = String::from("/");
-        devfs.push_str(self.idx.root.as_str());
-        devfs.push_str("/root/dev");
-        let devfs_args = vec![devfs.as_str()];
-
-        debug!("un mounting devfs in outer jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" => devfs_args.clone().join(" "));
-        let output = Command::new(UMOUNT).args(devfs_args).output().expect(
-            "failed to mount devfs in outer jail",
-        );
-        if !output.status.success() {
-            crit!("failed to mount devfs in outer jail"; "vm" => self.idx.uuid.hyphenated().to_string());
-        }
-
-        let mut devfs = String::from("/");
-        devfs.push_str(self.idx.root.as_str());
-        devfs.push_str("/root/jail/dev");
-        let devfs_args = vec![devfs.as_str()];
-
-        debug!("un mounting devfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>devfs_args.clone().join(" "));
-        let output = Command::new(UMOUNT).args(devfs_args).output().expect(
-            "failed to mount devfs in inner jail",
-        );
-        if !output.status.success() {
-            crit!("failed to mount devfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string());
-        }
-    }
-
-    fn umount_lxfs(&self) {
-        let mut linprocfs = String::from("/");
-        linprocfs.push_str(self.idx.root.as_str());
-        linprocfs.push_str("/root/jail/proc");
-        let linprocfs_args = vec![linprocfs.as_str()];
-
-        debug!("un mounting linprocfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>linprocfs_args.clone().join(" "));
-        let output = Command::new(UMOUNT).args(linprocfs_args).output().expect(
-            "failed to unmount linprocfs in inner jail",
-        );
-        if !output.status.success() {
-            crit!("failed to unmount linprocs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string());
-        }
-        let mut linsysfs = String::from("/");
-        linsysfs.push_str(self.idx.root.as_str());
-        linsysfs.push_str("/root/jail/sys");
-        let linsysfs_args = vec![linsysfs.as_str()];
-
-        debug!("un mounting linsysfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>linsysfs_args.clone().join(" "));
-        let output = Command::new(UMOUNT).args(linsysfs_args).output().expect(
-            "failed to unmount linsysfs in inner jail",
-        );
-        if !output.status.success() {
-            crit!("failed to unmount linsysfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string());
-        }
-    }
-
 
     /// stops a jail
     pub fn stop(&self, config: &Config) -> Result<i32, Box<Error>> {
@@ -167,12 +103,6 @@ impl<'a> Jail<'a> {
         if !output.status.success() {
             crit!("Failed to stop jail"; "vm" => self.idx.uuid.hyphenated().to_string());
             return Err(GenericError::bx("Could not stop jail"));
-        }
-
-        let _ = self.umount_devfs();
-
-        if self.config.brand == "lx-jail" {
-            let _ = self.umount_lxfs();
         }
 
         let _ = self.remove_rctl();
@@ -213,71 +143,6 @@ impl<'a> Jail<'a> {
             crit!("failed to set resource limits"; "vm" => self.idx.uuid.hyphenated().to_string());
             return Err(GenericError::bx("Could not set jail limits"));
         }
-        Ok(0)
-    }
-
-    fn mount_devfs(&self) -> Result<i32, Box<Error>> {
-        let mut devfs = String::from("/");
-        devfs.push_str(self.idx.root.as_str());
-        devfs.push_str("/root/dev");
-        let devfs_args = vec!["-t", "devfs", "devfs", devfs.as_str()];
-
-        debug!("mounting devfs in outer jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>devfs_args.clone().join(" "));
-        let output = Command::new(MOUNT).args(devfs_args).output().expect(
-            "failed to mount devfs in outer jail",
-        );
-
-        if !output.status.success() {
-            crit!("failed to mount ounter devfs"; "vm" => self.idx.uuid.hyphenated().to_string());
-            return Err(GenericError::bx("Could mount outer devfs"));
-        }
-
-        let mut devfs = String::from("/");
-        devfs.push_str(self.idx.root.as_str());
-        devfs.push_str("/root/jail/dev");
-        let devfs_args = vec!["-t", "devfs", "devfs", devfs.as_str()];
-
-        debug!("mounting devfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>devfs_args.clone().join(" "));
-        let output = Command::new(MOUNT).args(devfs_args).output().expect(
-            "failed to mount devfs in inner jail",
-        );
-        if !output.status.success() {
-            crit!("failed to mount inner devfs"; "vm" => self.idx.uuid.hyphenated().to_string());
-            return Err(GenericError::bx("Could not remove resource limits"));
-        }
-
-        Ok(0)
-    }
-    fn mount_lxfs(&self) -> Result<i32, Box<Error>> {
-
-        let mut linprocfs = String::from("/");
-        linprocfs.push_str(self.idx.root.as_str());
-        linprocfs.push_str("/root/jail/proc");
-        let linprocfs_args = vec!["-t", "linprocfs", "linprocfs", linprocfs.as_str()];
-
-        debug!("mounting linprocfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>linprocfs_args.clone().join(" "));
-        let output = Command::new(MOUNT).args(linprocfs_args).output().expect(
-            "failed to mount linprocfs in inner jail",
-        );
-        if !output.status.success() {
-            crit!("failed to mount inner linprocfs"; "vm" => self.idx.uuid.hyphenated().to_string());
-            return Err(GenericError::bx("Could not remove resource limits"));
-        }
-
-        let mut linsysfs = String::from("/");
-        linsysfs.push_str(self.idx.root.as_str());
-        linsysfs.push_str("/root/jail/sys");
-        let linsysfs_args = vec!["-t", "linsysfs", "linsysfs", linsysfs.as_str()];
-
-        debug!("mounting linsysfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" =>linsysfs_args.clone().join(" "));
-        let output = Command::new(MOUNT).args(linsysfs_args).output().expect(
-            "failed to mount linsysfs in inner jail",
-        );
-        if !output.status.success() {
-            crit!("failed to mount inner linsysfs"; "vm" => self.idx.uuid.hyphenated().to_string());
-            return Err(GenericError::bx("Could not remove resource limits"));
-        }
-
         Ok(0)
     }
 
@@ -328,7 +193,6 @@ fn create_args(config: &Config, jail: &Jail) -> Result<CreateArgs, Box<Error>> {
     let uuid = jail.idx.uuid.hyphenated().to_string();
     let mut name = String::from("name=");
     name.push_str(uuid.as_str());
-    let mut idx_file = PathBuf::from(config.settings.conf_dir.as_str());
     let mut path = String::from("path=/");
     path.push_str(jail.idx.root.as_str());
     path.push_str("/root");

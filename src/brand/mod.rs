@@ -82,8 +82,8 @@ pub struct Brand {
 
 
 impl Brand {
-    fn from_file(brand: &str) -> Result<Self, Box<std::error::Error>> {
-        let mut file = File::open(brand)?;
+    fn from_file(file: &str) -> Result<Self, Box<std::error::Error>> {
+        let mut file = File::open(file)?;
         let mut contents = String::new();
         file.read_to_string(&mut contents).expect(
             "Failed to read brand file.",
@@ -115,7 +115,7 @@ mod tests {
     }
     #[test]
     fn lx_jail() {
-        match Brand::from_file("rel/pkgng/deploy/usr/local/lib/brand/lx_jail/config.toml") {
+        match Brand::from_file("rel/pkgng/deploy/usr/local/lib/brand/lx-jail/config.toml") {
             Ok(_) => assert!(true),
 
             Err(e) => {
