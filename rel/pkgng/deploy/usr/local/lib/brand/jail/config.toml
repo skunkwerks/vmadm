@@ -29,11 +29,11 @@ args=["{brand_root}", "{jail_uuid}", "{hostname}"]
 
 # Halt the jail executed on the host before
 # rctl and interfaces are torn down, the outer
-# jail is then shut down
+# jail is then shut downb
 [halt]
 cmd="{brand_root}/halt"
 args=["{brand_root}", "{jail_root}", "{inner_id}"]
 
 [login]
 cmd="/usr/sbin/jexec"
-args=["{jail_id}", "/bin/csh"]
+args=["{inner_id}", "/bin/csh"]
