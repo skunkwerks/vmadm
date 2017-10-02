@@ -14,8 +14,8 @@ validate_root "${jail_root}"
 find ${jail_root}/root \
      -not -path "${jail_root}/root/jail" \
      -not -path "${jail_root}/root/jail/*" \
-     -not -path "${jail_root}/root"
-# -delete
+     -not -path "${jail_root}/root"\
+     -delete
 
 # create bas
 
@@ -26,6 +26,8 @@ do
     chown root:wheel ${jail_root}/root/${dir}
     chmod 775 ${jail_root}/root/${dir}
 done
+
+cp /etc/defaults/devfs.rules ${jail_root}/$ID/root/etc/defaults
 
 ## required files:
 execs='/libexec/ld-elf.so.1 /bin/sh /sbin/ifconfig /sbin/route /usr/sbin/jail'

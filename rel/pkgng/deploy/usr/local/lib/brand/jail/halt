@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # include shared utility functions
-inner_id="$3"
+inner_id="$1"
 
 # cleanly shut down the inner jail (should this be run inside the outer jail?)
 if [ ! -z "${inner_id}" ]

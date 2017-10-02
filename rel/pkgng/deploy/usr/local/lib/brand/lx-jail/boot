@@ -21,4 +21,4 @@ jail -c persist \
      sysvsem=new \
      sysvshm=new \
      allow.raw_sockets \
-     exec.start='/etc/init.d/rc 3'
+     exec.start='/etc/init.d/rc 0'

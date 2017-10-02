@@ -32,3 +32,22 @@ validate_root () {
         exit 1
     fi
 }
+
+install_brand_files() {
+    brand_root="$1"
+    jail_root="$2"
+
+    brands_src=$(dirname ${brand_root})
+    brands_target="${jail_root}/root/${brands_src}"
+
+    # delete the old brand
+    rm -r ${brands_target}
+
+    # create a new folder for the brand
+    mkdir -p ${brands_target}
+
+    # copy over our brand
+    cp -r ${brand_root} ${brands_target}
+    cp -r ${brands_src}/shared ${brands_target}
+
+}

@@ -9,36 +9,39 @@
 # {brand_root} - root of this brand
 # {hostname}   - hostname of the jail
 
-modname="jail"
+modname="lx-jail"
 
 # install is executed after cloning
 [install]
 cmd="{brand_root}/install"
-args=["{jail_root}", "{brand_root}"]
+args=["{brand_root}", "{jail_root}"]
 
 # installed before booting (on the host)
 [init]
 cmd="{brand_root}/init"
-args=["{jail_root}", "{brand_root}"]
+args=["{brand_root}", "{jail_root}"]
 
 # executed after booting the outer zone to
 # boot the inner zone
 [boot]
 cmd="{brand_root}/boot"
-args=["{jail_uuid}", "{hostname}"]
+args=["{brand_root}", "{jail_uuid}", "{hostname}"]
 
 # Halt the jail executed on the host before
 # rctl and interfaces are torn down, the outer
 # jail is then shut down
 [halt]
 cmd="{brand_root}/halt"
-args=["{jail_root}", "{inner_id}"]
+args=["{inner_id}"]
 
 ## called after the outer jail has been stopped
 [halted]
 cmd="{brand_root}/halted"
 args=["{brand_root}", "{jail_root}"]
 
+## We can't just call bin/sh as this might differ from
+## distribution to distribution
+
 [login]
-cmd="/usr/sbin/jexec"
-args=["{jail_id}", "/bin/sh"]
+cmd="{brand_root}/login"
+args=["{jail_id}"]

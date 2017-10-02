@@ -1,10 +1,9 @@
 #!/bin/sh
 
 # include shared utility functions
-brand_root="$1"
-jail_root="$2"
-
-. ${brand_root}/../shared/utils.sh
+. ../shared/utils.sh
+jail_root="$1"
+inner_id="$2"
 
 validate_root "${jail_root}"
 
@@ -12,3 +11,6 @@ validate_root "${jail_root}"
 umount ${jail_root}/root/dev
 # inner jail
 umount ${jail_root}/root/jail/dev
+
+umount ${jail_root}/root/jail/proc
+umount ${jail_root}/root/jail/sys

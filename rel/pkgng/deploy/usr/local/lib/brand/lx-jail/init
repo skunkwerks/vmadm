@@ -1,21 +1,14 @@
 #!/bin/sh
 
+brand_root="$1"
+jail_root="$2"
+
 # include shared utility functions
-. ../shared/utils.sh
-jail_root="$1"
-brand_root="$2"
+. ${brand_root}/../shared/utils.sh
 
 validate_root "${jail_root}"
 
-# delete the old brand
-rm -r ${jail_root}/root$(dirname ${brand_root})
-
-# create a new folder for the brand
-mkdir -p ${jail_root}/root$(dirname ${brand_root})
-
-# copy over our brand
-cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})
-
+install_brand_files "${brand_root}" "${jail_root}"
 # mount devfs (not sure about this)
 
 # outer jail
