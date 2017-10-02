@@ -71,7 +71,10 @@ impl Step {
     }
     pub fn to_string(&self, jail: &Jail, conf: &Config) -> String {
         let mut cmd = self.cmd(jail, conf);
-        cmd.push_str(self.args(jail, conf).join(" ").as_str());
+        cmd.push(' ');
+        cmd.push('\'');
+        cmd.push_str(self.args(jail, conf).join("' '").as_str());
+        cmd.push('\'');
         cmd
     }
 }
