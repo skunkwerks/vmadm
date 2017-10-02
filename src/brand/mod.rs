@@ -48,7 +48,7 @@ impl Step {
         ).collect()
     }
     #[cfg(not(target_os = "freebsd"))]
-    pub fn run(&self, jail: &Jail, conf: &Config) -> Result<Output, std::io::Error> {
+    pub fn output(&self, jail: &Jail, conf: &Config) -> Result<Output, std::io::Error> {
         let command = self.cmd(jail, conf);
         let args = self.args(jail, conf);
         debug!("[BRAND] Running command";
@@ -59,7 +59,7 @@ impl Step {
         Command::new("echo").args(args).output()
     }
     #[cfg(target_os = "freebsd")]
-    pub fn run(&self, jail: &Jail, conf: &Config) -> Result<Output, std::io::Error> {
+    pub fn output(&self, jail: &Jail, conf: &Config) -> Result<Output, std::io::Error> {
         let command = self.cmd(jail, conf);
         let args = self.args(jail, conf);
         debug!("[BRAND] Running command";
@@ -68,6 +68,29 @@ impl Step {
                "scope" => "brand",
                "brand" => jail.config.brand.as_str());
         Command::new(command).args(args).output()
+    }
+
+    #[cfg(not(target_os = "freebsd"))]
+    pub fn spawn(&self, jail: &Jail, conf: &Config) -> Result<std::process::Child, std::io::Error> {
+        let command = self.cmd(jail, conf);
+        let args = self.args(jail, conf);
+        debug!("[BRAND] Running command";
+               "command" => command.clone(),
+               "args" => args.clone().join(" "),
+               "scope" => "brand",
+               "brand" => jail.config.brand.as_str());
+        Command::new("echo").args(args).spawn()
+    }
+    #[cfg(target_os = "freebsd")]
+    pub fn spawn(&self, jail: &Jail, conf: &Config) -> Result<std::process::Child, std::io::Error> {
+        let command = self.cmd(jail, conf);
+        let args = self.args(jail, conf);
+        debug!("[BRAND] Running command";
+               "command" => command.clone(),
+               "args" => args.clone().join(" "),
+               "scope" => "brand",
+               "brand" => jail.config.brand.as_str());
+        Command::new(command).args(args).spawn()
     }
     pub fn to_string(&self, jail: &Jail, conf: &Config) -> String {
         let mut cmd = self.cmd(jail, conf);

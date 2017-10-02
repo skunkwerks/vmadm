@@ -62,7 +62,7 @@ impl<'a> Jail<'a> {
         self.set_rctl()?;
         let brand = self.brand(config)?;
 
-        brand.init.run(self, config).expect("brand init failed");
+        brand.init.output(self, config).expect("brand init failed");
         // self.mount_devfs()?;
         // if self.config.brand == "lx-jail" {
         //     self.mount_lxfs()?;
@@ -98,7 +98,7 @@ impl<'a> Jail<'a> {
         debug!("Dleting jail"; "vm" => self.idx.uuid.hyphenated().to_string());
         let brand = self.brand(config)?;
 
-        brand.halt.run(self, config).expect("brand halt failed");;
+        brand.halt.output(self, config).expect("brand halt failed");;
 
         let output = Command::new(JAIL)
             .args(&["-r", self.idx.uuid.hyphenated().to_string().as_str()])
@@ -224,7 +224,7 @@ impl<'a> Jail<'a> {
             exec_start.push_str("/sbin/ifconfig lo0 127.0.0.1 up; ");
         };
 
-        brand.init.run(self, config).expect("brand init failed");
+        brand.init.output(self, config).expect("brand init failed");
 
         // inner jail configuration
         exec_start.push_str(brand.boot.to_string(self, config).as_str());

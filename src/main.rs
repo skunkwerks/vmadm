@@ -54,8 +54,6 @@ use std::fs::File;
 
 use aud::{Failure, Adventure, Saga};
 
-use std::process::Command;
-
 mod brand;
 mod zfs;
 mod images;
@@ -75,12 +73,6 @@ use config::Config;
 
 mod errors;
 use errors::GenericError;
-
-#[cfg(target_os = "freebsd")]
-static JEXEC: &'static str = "jexec";
-#[cfg(not(target_os = "freebsd"))]
-static JEXEC: &'static str = "echo";
-
 
 /// Custom Drain logic
 struct RuntimeLevelFilter<D> {
@@ -316,10 +308,9 @@ fn console(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>>
             println!("The vm is not running");
             Err(GenericError::bx("VM is not running"))
         }
-        Ok(Jail { inner: Some(jid), .. }) => {
-            let mut child = Command::new(JEXEC)
-                .args(&[jid.id.to_string().as_str(), "/bin/csh"])
-                .spawn()
+        Ok(jail) => {
+            let brand = jail.brand(conf)?;
+            let mut child = brand.login.spawn(&jail, conf)
                 .expect("failed to execute jexec");
             let ecode = child.wait().expect("failed to wait on child");
             if ecode.success() {
