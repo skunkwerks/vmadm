@@ -11,7 +11,7 @@ validate_root "${jail_root}"
 
 ## Find files that do not beling in the jail root, which is everything but
 ## jail, the rest will be populated by us
-find x/${jail_root}/root \
+find ${jail_root}/root \
      -not -path "${jail_root}/root/jail" \
      -not -path "${jail_root}/root/jail/*" \
      -not -path "${jail_root}/root"
