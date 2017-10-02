@@ -94,7 +94,7 @@ cat <<EOF > $ID.json
 {
   "v": 2,
   "uuid": "${ID}",
-  "name": "CentOS",
+  "name": "${DISTRO}",
   "version": "${VSN}",
   "type": "lx-jail-dataset",
   "os": "Linux",
