@@ -3,11 +3,26 @@
 # Note this gets executed INSIDE the outer jail not on the host!
 
 brand_root="$1"
-uuid="$2"
-hostname="$3"
+jail_root="$2"
+uuid="$3"
+hostname="$4"
 
 # include shared utility functions
 . ${brand_root}/../shared/utils.sh
+. ${brand_root}/lx-utils.sh
+
+validate_root "${jail_root}"
+
+distro=$(detect_distro "${jail_root}/root/jail")
+
+
+if [ "${distro}" = "redhat" ]
+then
+    init_script='/bin/sh /etc/rc.d/rc 3'
+else
+    echo "unsupported distro"
+    exit 1
+fi
 
 # create
 jail -c persist \
@@ -21,4 +36,4 @@ jail -c persist \
      sysvsem=new \
      sysvshm=new \
      allow.raw_sockets \
-     exec.start='/etc/init.d/rc 0'
+     exec.start="${init_script}"

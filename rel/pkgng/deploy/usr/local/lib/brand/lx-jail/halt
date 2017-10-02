@@ -1,10 +1,28 @@
 #!/bin/sh
 
 # include shared utility functions
-inner_id="$1"
+brand_root="$1"
+jail_root="$2"
+inner_id="$3"
+
+. ${brand_root}/../shared/utils.sh
+. ${brand_root}/lx-utils.sh
+
+validate_root "${jail_root}"
+
+distro=$(detect_distro "${jail_root}/root/jail")
+
+if [ -z "${inner_id}" ]
+then
+    echo "no jail id"
+    exit 1
+fi
 
 # cleanly shut down the inner jail (should this be run inside the outer jail?)
-if [ ! -z "${inner_id}" ]
+if [ "${distro}" = "redhat" ]
 then
-    jexec ${inner_id} /sbin/halt
+    jexec ${inner_id} /bin/sh /etc/rc.d/rc 0
+else
+    echo "unsupported distro"
+    exit 1
 fi

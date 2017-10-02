@@ -25,14 +25,14 @@ args=["{brand_root}", "{jail_root}"]
 # boot the inner zone
 [boot]
 cmd="{brand_root}/boot"
-args=["{brand_root}", "{jail_uuid}", "{hostname}"]
+args=["{brand_root}", "{jail_root}", "{jail_uuid}", "{hostname}"]
 
 # Halt the jail executed on the host before
 # rctl and interfaces are torn down, the outer
 # jail is then shut down
 [halt]
 cmd="{brand_root}/halt"
-args=["{inner_id}"]
+args=["{brand_root}", "{jail_root}", "{inner_id}"]
 
 ## called after the outer jail has been stopped
 [halted]
@@ -44,4 +44,4 @@ args=["{brand_root}", "{jail_root}"]
 
 [login]
 cmd="{brand_root}/login"
-args=["{jail_id}"]
+args=["{brand_root}", "{jail_root}", "{inner_id}"]
