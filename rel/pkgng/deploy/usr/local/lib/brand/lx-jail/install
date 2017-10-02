@@ -1,0 +1,56 @@
+#!/bin/sh
+
+brand_root="$1"
+jail_root="$2"
+
+# include shared utility functions
+. ${brand_root}/../shared/utils.sh
+
+validate_root "${jail_root}"
+
+## Find files that do not beling in the jail root, which is everything but
+## jail, the rest will be populated by us
+find ${jail_root}/root \
+     -not -path "${jail_root}/root/jail" \
+     -not -path "${jail_root}/root/jail/*" \
+     -not -path "${jail_root}/root" \
+     -delete
+
+# create bas
+
+dirs="bin dev mnt proc tmp etc/defaults"
+for dir in ${dirs}
+do
+    echo mkdir -p ${jail_root}/root/${dir}
+    echo chown root:wheel ${jail_root}/root/${dir}
+    echo chmod 775 ${jail_root}/root/${dir}
+done
+
+cp /etc/defaults/devfs.rules ${jail_root}/$ID/root/etc/defaults
+
+## required files:
+execs='/libexec/ld-elf.so.1 /bin/fgrep /bin/sh /sbin/ifconfig /sbin/route /usr/sbin/jail'
+files=""
+## inlcude libraries that are needed
+for e in ${execs}
+do
+    files="${files} $(ldd -a $e 2> /dev/null | awk '/=>/{print $(NF-1)}')"
+    files="${files} ${e}"
+done
+
+## copy the files in the zone root
+for file in ${files}
+do
+    echo mkdir -p ${jail_root}/root$(dirname ${file})
+    echo cp ${file} ${jail_root}/root${file}
+done
+
+# install the branch information
+
+echo mkdir -p ${jail_root}/root$(dirname ${brand_root})
+echo cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})
+
+#TODO: network config:
+# * get resolvers and set them resolvers
+# * routs? (do we need to set them?)
+#TODO: get rood autorized keys set set them

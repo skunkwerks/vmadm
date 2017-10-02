@@ -54,8 +54,8 @@ use std::fs::File;
 
 use aud::{Failure, Adventure, Saga};
 
-use std::process::Command;
-
+mod brand;
+use brand::Brand;
 mod zfs;
 mod images;
 mod jails;
@@ -74,12 +74,6 @@ use config::Config;
 
 mod errors;
 use errors::GenericError;
-
-#[cfg(target_os = "freebsd")]
-static JEXEC: &'static str = "jexec";
-#[cfg(not(target_os = "freebsd"))]
-static JEXEC: &'static str = "echo";
-
 
 /// Custom Drain logic
 struct RuntimeLevelFilter<D> {
@@ -255,7 +249,7 @@ fn reboot(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
         }
         Ok(jail) => {
             println!("Rebooting jail {}", uuid);
-            jail.stop()?;
+            jail.stop(conf)?;
             jail.start(conf)
         }
     }
@@ -315,10 +309,9 @@ fn console(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>>
             println!("The vm is not running");
             Err(GenericError::bx("VM is not running"))
         }
-        Ok(Jail { inner: Some(jid), .. }) => {
-            let mut child = Command::new(JEXEC)
-                .args(&[jid.id.to_string().as_str(), "/bin/csh"])
-                .spawn()
+        Ok(jail) => {
+            let brand = jail.brand(conf)?;
+            let mut child = brand.login.spawn(&jail, conf)
                 .expect("failed to execute jexec");
             let ecode = child.wait().expect("failed to wait on child");
             if ecode.success() {
@@ -343,7 +336,7 @@ fn stop(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
         }
         Ok(jail) => {
             println!("Stopping jail {}", uuid);
-            jail.stop()
+            jail.stop(conf)
         }
     }
 }
@@ -394,6 +387,7 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
     dataset.push('/');
     dataset.push_str(jail.image_uuid.hyphenated().to_string().as_str());
 
+    #[derive(Debug, Clone)]
     struct CreateState<'a> {
         conf: &'a Config,
         uuid: Uuid,
@@ -505,10 +499,35 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
             None => state,
         }
     }
+
+    fn brand_install_up(state: CreateState) -> Result<CreateState, Failure<CreateState>> {
+        match Brand::load(state.config.brand.as_str(), state.conf) {
+            Err(_) => Err(Failure::new(state, GenericError::bx("invalid brand"))),
+            Ok(brand)  => {
+                let s1 = state.clone();
+                let jail = Jail{
+                    idx: & s1.entry.unwrap(),
+                    config: s1.config,
+                    inner: None,
+                    outer: None,
+                };
+                match brand.install.output(&jail, state.conf) {
+                    Ok(_) => Ok(state),
+                    Err(_) => Err(Failure::new(state, GenericError::bx("failed to initilize brand")))
+                }
+
+            }
+        }
+    }
+    fn brand_install_down(state: CreateState) -> CreateState {
+        crit!("Rolling back clone");
+        state
+    }
     let saga = Saga::new(vec![
         Adventure::new(insert_up, insert_down),
         Adventure::new(snap_up, snap_down),
         Adventure::new(clone_up, clone_down),
+        Adventure::new(brand_install_up, brand_install_down),
     ]);
     match saga.tell(state) {
         Ok(state) => {
@@ -528,7 +547,7 @@ fn delete(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
         Ok(jail) => {
             if jail.outer.is_some() {
                 println!("Stopping jail {}", uuid);
-                jail.stop()?;
+                jail.stop(conf)?;
             };
             let origin = zfs::origin(jail.idx.root.as_str());
             match zfs::destroy(jail.idx.root.as_str()) {

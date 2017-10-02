@@ -1,0 +1,33 @@
+#!/bin/sh
+
+brand_root="$1"
+jail_root="$2"
+inner_id="$3"
+
+. ${brand_root}/../shared/utils.sh
+. ${brand_root}/lx-utils.sh
+
+validate_root "${jail_root}"
+
+distro=$(detect_distro "${jail_root}/root/jail")
+
+
+if [ "${distro}" = "redhat" ]
+then
+    login_shell='/bin/bash'
+elif [ "${distro}" = "ubuntu" ]
+then
+    login_shell='/bin/bash'
+elif [ "${distro}" = "debian" ]
+then
+    login_shell='/bin/bash'
+else
+    echo "Unsupported distro: ${distro}"
+    exit 3
+fi
+
+# cleanly shut down the inner jail (should this be run inside the outer jail?)
+if [ ! -z "${inner_id}" ]
+then
+    jexec ${inner_id} ${login_shell}
+fi

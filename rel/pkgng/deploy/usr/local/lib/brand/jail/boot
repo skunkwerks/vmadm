@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Note this gets executed INSIDE the outer jail not on the host!
+
+
+brand_root="$1"
+uuid="$2"
+hostname="$3"
+
+# include shared utility functions
+. ${brand_root}/../shared/utils.sh
+
+# create
+jail -c persist \
+     "name=${uuid}" \
+     "host.hostname=${hostname}" \
+     path=/jail \
+     ip4=inherit \
+     devfs_ruleset=4 \
+     securelevel=2 \
+     sysvmsg=new \
+     sysvsem=new \
+     sysvshm=new \
+     allow.raw_sockets \
+     exec.start='/bin/sh /etc/rc'

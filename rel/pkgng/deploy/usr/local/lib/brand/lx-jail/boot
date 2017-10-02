@@ -1,0 +1,43 @@
+#!/bin/sh
+
+# Note this gets executed INSIDE the outer jail not on the host!
+
+brand_root="$1"
+uuid="$2"
+hostname="$3"
+
+# include shared utility functions
+. ${brand_root}/../shared/utils.sh
+. ${brand_root}/lx-utils.sh
+
+distro=$(detect_distro "/jail")
+
+
+if [ "${distro}" = "redhat" ]
+then
+    init_script='/bin/sh /etc/rc.d/rc 3'
+elif [ "${distro}" = "ubuntu" ]
+then
+    init_script='/etc/init.d/rc 3'
+elif [ "${distro}" = "debian" ]
+then
+    #TODO: is this right?
+    init_script='/etc/init.d/rc 3'
+else
+    echo "Unsupported distro: ${distro}"
+    exit 3
+fi
+
+# create
+jail -c persist \
+     "name=${uuid}" \
+     "host.hostname=${hostname}" \
+     path=/jail \
+     ip4=inherit \
+     devfs_ruleset=4 \
+     securelevel=2 \
+     sysvmsg=new \
+     sysvsem=new \
+     sysvshm=new \
+     allow.raw_sockets \
+     exec.start="${init_script}"

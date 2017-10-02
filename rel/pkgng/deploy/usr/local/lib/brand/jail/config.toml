@@ -1,0 +1,44 @@
+# Jail brand configuration
+# All strings act as templates, possbile parameters
+# are:
+#
+# {inner_id}   - the jid of the inner jail (only halt, login)
+# {ounter_id}  - the jid of the outer jail (only halt, login)
+# {jail_uuid}  - uuid if the jail
+# {jail_root}  - root of the jail
+# {brand_root} - root of this brand
+# {hostname}   - hostname of the jail
+
+modname="jail"
+
+# install is executed after cloning
+[install]
+cmd="{brand_root}/install"
+args=["{brand_root}", "{jail_root}"]
+
+# installed before booting (on the host)
+[init]
+cmd="{brand_root}/init"
+args=["{brand_root}", "{jail_root}"]
+
+# executed after booting the outer zone to
+# boot the inner zone
+[boot]
+cmd="{brand_root}/boot"
+args=["{brand_root}", "{jail_uuid}", "{hostname}"]
+
+# Halt the jail executed on the host before
+# rctl and interfaces are torn down, the outer
+# jail is then shut downb
+[halt]
+cmd="{brand_root}/halt"
+args=["{inner_id}"]
+
+## called after the outer jail has been stopped
+[halted]
+cmd="{brand_root}/halted"
+args=["{brand_root}", "{jail_root}"]
+
+[login]
+cmd="/usr/sbin/jexec"
+args=["{inner_id}", "/bin/csh"]

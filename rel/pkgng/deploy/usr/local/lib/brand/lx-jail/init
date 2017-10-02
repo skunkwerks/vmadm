@@ -1,0 +1,21 @@
+#!/bin/sh
+
+brand_root="$1"
+jail_root="$2"
+
+# include shared utility functions
+. ${brand_root}/../shared/utils.sh
+
+validate_root "${jail_root}"
+
+install_brand_files "${brand_root}" "${jail_root}"
+# mount devfs (not sure about this)
+
+# outer jail
+mount -t devfs devfs ${jail_root}/root/dev
+# inner jail
+mount -t devfs devfs ${jail_root}/root/jail/dev
+
+# mount linux specific fs's
+mount -t linprocfs linprocfs ${jail_root}/root/jail/proc
+mount -t linsysfs linsysfs ${jail_root}/root/jail/sys

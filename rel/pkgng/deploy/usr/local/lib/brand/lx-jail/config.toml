@@ -1,0 +1,47 @@
+# Jail brand configuration
+# All strings act as templates, possbile parameters
+# are:
+#
+# {inner_id}   - the jid of the inner jail (only halt, login)
+# {ounter_id}  - the jid of the outer jail (only halt, login)
+# {jail_uuid}  - uuid if the jail
+# {jail_root}  - root of the jail
+# {brand_root} - root of this brand
+# {hostname}   - hostname of the jail
+
+modname="lx-jail"
+
+# install is executed after cloning
+[install]
+cmd="{brand_root}/install"
+args=["{brand_root}", "{jail_root}"]
+
+# installed before booting (on the host)
+[init]
+cmd="{brand_root}/init"
+args=["{brand_root}", "{jail_root}"]
+
+# executed after booting the outer zone to
+# boot the inner zone
+[boot]
+cmd="{brand_root}/boot"
+args=["{brand_root}", "{jail_uuid}", "{hostname}"]
+
+# Halt the jail executed on the host before
+# rctl and interfaces are torn down, the outer
+# jail is then shut down
+[halt]
+cmd="{brand_root}/halt"
+args=["{brand_root}", "{jail_root}", "{inner_id}"]
+
+## called after the outer jail has been stopped
+[halted]
+cmd="{brand_root}/halted"
+args=["{brand_root}", "{jail_root}"]
+
+## We can't just call bin/sh as this might differ from
+## distribution to distribution
+
+[login]
+cmd="{brand_root}/login"
+args=["{brand_root}", "{jail_root}", "{inner_id}"]

@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# include shared utility functions
+brand_root="$1"
+jail_root="$2"
+
+. ${brand_root}/../shared/utils.sh
+
+validate_root "${jail_root}"
+
+# outer jail
+umount ${jail_root}/root/dev
+# inner jail
+umount ${jail_root}/root/jail/dev
