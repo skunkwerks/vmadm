@@ -18,3 +18,6 @@ fi
 umount ${jail_root}/root/dev
 # inner jail
 umount ${jail_root}/root/jail/dev
+
+umount ${jail_root}/root/jail/proc
+umount ${jail_root}/root/jail/sys

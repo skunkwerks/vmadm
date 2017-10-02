@@ -124,7 +124,7 @@ impl<'a> Jail<'a> {
             crit!("failed to mount devfs in inner jail"; "vm" => self.idx.uuid.hyphenated().to_string());
         }
     }
-    
+
     fn umount_lxfs(&self) {
         let mut linprocfs = String::from("/");
         linprocfs.push_str(self.idx.root.as_str());
@@ -170,11 +170,11 @@ impl<'a> Jail<'a> {
         }
 
         let _ = self.umount_devfs();
-        
+
         if self.config.brand == "lx-jail" {
             let _ = self.umount_lxfs();
         }
-        
+
         let _ = self.remove_rctl();
         match self.outer {
             Some(outer) => {
@@ -249,7 +249,7 @@ impl<'a> Jail<'a> {
         Ok(0)
     }
     fn mount_lxfs(&self) -> Result<i32, Box<Error>> {
-        
+
         let mut linprocfs = String::from("/");
         linprocfs.push_str(self.idx.root.as_str());
         linprocfs.push_str("/root/jail/proc");
@@ -263,7 +263,7 @@ impl<'a> Jail<'a> {
             crit!("failed to mount inner linprocfs"; "vm" => self.idx.uuid.hyphenated().to_string());
             return Err(GenericError::bx("Could not remove resource limits"));
         }
-        
+
         let mut linsysfs = String::from("/");
         linsysfs.push_str(self.idx.root.as_str());
         linsysfs.push_str("/root/jail/sys");
@@ -277,7 +277,7 @@ impl<'a> Jail<'a> {
             crit!("failed to mount inner linsysfs"; "vm" => self.idx.uuid.hyphenated().to_string());
             return Err(GenericError::bx("Could not remove resource limits"));
         }
-        
+
         Ok(0)
     }
 
