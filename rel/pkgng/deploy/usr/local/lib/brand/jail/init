@@ -9,13 +9,13 @@ jail_root="$2"
 validate_root "${jail_root}"
 
 # delete the old brand
-echo rm -r ${jail_root}/root$(dirname ${brand_root})
+rm -r ${jail_root}/root$(dirname ${brand_root})
 
 # create a new folder for the brand
-echo mkdir -p ${jail_root}/root$(dirname ${brand_root})
+mkdir -p ${jail_root}/root$(dirname ${brand_root})
 
 # copy over our brand
-echo cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})
+cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})
 
 # mount devfs (not sure about this)
 
