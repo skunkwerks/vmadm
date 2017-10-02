@@ -20,8 +20,11 @@ pub struct Settings {
     pub conf_dir: String,
     #[serde(default = "default_image_dir")]
     pub image_dir: String,
+    #[serde(default = "default_brand_dir")]
+    pub brand_dir: String,
     #[serde(default = "devfs_ruleset")]
     pub devfs_ruleset: u32,
+
     pub networks: Map<String, String>,
 }
 
@@ -37,6 +40,10 @@ pub struct Config {
 
 fn default_conf_dir() -> String {
     "/usr/local/etc/vmadm".to_string()
+}
+
+fn default_brand_dir() -> String {
+    "/usr/local/lib/brand".to_string()
 }
 
 fn default_image_dir() -> String {

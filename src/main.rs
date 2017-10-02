@@ -56,6 +56,7 @@ use aud::{Failure, Adventure, Saga};
 
 use std::process::Command;
 
+mod brand;
 mod zfs;
 mod images;
 mod jails;
@@ -255,7 +256,7 @@ fn reboot(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
         }
         Ok(jail) => {
             println!("Rebooting jail {}", uuid);
-            jail.stop()?;
+            jail.stop(conf)?;
             jail.start(conf)
         }
     }
@@ -343,7 +344,7 @@ fn stop(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
         }
         Ok(jail) => {
             println!("Stopping jail {}", uuid);
-            jail.stop()
+            jail.stop(conf)
         }
     }
 }
@@ -528,7 +529,7 @@ fn delete(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
         Ok(jail) => {
             if jail.outer.is_some() {
                 println!("Stopping jail {}", uuid);
-                jail.stop()?;
+                jail.stop(conf)?;
             };
             let origin = zfs::origin(jail.idx.root.as_str());
             match zfs::destroy(jail.idx.root.as_str()) {

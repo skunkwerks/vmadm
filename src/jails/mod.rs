@@ -1,6 +1,7 @@
 //! Wrapper around the freebsd jail commands
 
 use std::error::Error;
+use std::path::PathBuf;
 use errors::GenericError;
 use std::collections::HashMap;
 use std::process::Command;
@@ -9,6 +10,7 @@ use config::Config;
 use uuid::Uuid;
 use jdb::IdxEntry;
 use jail_config::JailConfig;
+use brand::Brand;
 
 #[derive(Debug)]
 /// Basic information about a ZFS dataset
@@ -63,11 +65,13 @@ impl<'a> Jail<'a> {
     /// starts a jail
     pub fn start(&self, config: &Config) -> Result<i32, Box<Error>> {
         self.set_rctl()?;
-        self.mount_devfs()?;
+        let brand = Brand::load(self.config.brand.as_str(), config)?;
 
-        if self.config.brand == "lx-jail" {
-            self.mount_lxfs()?;
-        }
+        brand.init.run(self, config)?;
+        // self.mount_devfs()?;
+        // if self.config.brand == "lx-jail" {
+        //     self.mount_lxfs()?;
+        // }
 
         let CreateArgs { args, ifs } = create_args(config, self)?;
         debug!("Start jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" => args.clone().join(" "));
@@ -148,11 +152,14 @@ impl<'a> Jail<'a> {
         }
     }
 
-    
 
     /// stops a jail
-    pub fn stop(&self) -> Result<i32, Box<Error>> {
+    pub fn stop(&self, config: &Config) -> Result<i32, Box<Error>> {
         debug!("Dleting jail"; "vm" => self.idx.uuid.hyphenated().to_string());
+        let brand = Brand::load(self.config.brand.as_str(), config)?;
+
+        brand.halt.run(self, config)?;
+
         let output = Command::new(JAIL)
             .args(&["-r", self.idx.uuid.hyphenated().to_string().as_str()])
             .output()
@@ -164,7 +171,7 @@ impl<'a> Jail<'a> {
 
         let _ = self.umount_devfs();
         
-        if self.config.brand == "lx-jail" {   
+        if self.config.brand == "lx-jail" {
             let _ = self.umount_lxfs();
         }
         
@@ -321,6 +328,7 @@ fn create_args(config: &Config, jail: &Jail) -> Result<CreateArgs, Box<Error>> {
     let uuid = jail.idx.uuid.hyphenated().to_string();
     let mut name = String::from("name=");
     name.push_str(uuid.as_str());
+    let mut idx_file = PathBuf::from(config.settings.conf_dir.as_str());
     let mut path = String::from("path=/");
     path.push_str(jail.idx.root.as_str());
     path.push_str("/root");

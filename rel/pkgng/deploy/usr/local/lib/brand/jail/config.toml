@@ -9,7 +9,7 @@
 # {brand_root} - root of this brand
 # {hostname}   - hostname of the jail
 
-modname=jail
+modname="jail"
 
 # install is executed after cloning
 [install]
@@ -25,10 +25,11 @@ args=["{jail_root}", "{brand_root}"]
 # boot the inner zone
 [boot]
 cmd="{brand_root}/boot"
-args=["{jail_uuid}" "{hostname}"]
+args=["{jail_uuid}", "{hostname}"]
 
 # Halt the jail executed on the host before
-# rctl and interfaces are torn down
+# rctl and interfaces are torn down, the outer
+# jail is then shut down
 [halt]
 cmd="{brand_root}/halt"
 args=["{jail_root}", "{inner_id}"]
