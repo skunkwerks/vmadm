@@ -54,17 +54,21 @@ pub struct Jail<'a> {
 
 impl<'a> Jail<'a> {
     /// starts a jail
+
+    pub fn brand(&self, config: &Config) -> Result<Brand, Box<Error>> {
+        Brand::load(self.config.brand.as_str(), config)
+    }
     pub fn start(&self, config: &Config) -> Result<i32, Box<Error>> {
         self.set_rctl()?;
-        let brand = Brand::load(self.config.brand.as_str(), config)?;
+        let brand = self.brand(config)?;
 
-        brand.init.run(self, config)?;
+        brand.init.run(self, config).expect("brand init failed");
         // self.mount_devfs()?;
         // if self.config.brand == "lx-jail" {
         //     self.mount_lxfs()?;
         // }
 
-        let CreateArgs { args, ifs } = create_args(config, self)?;
+        let CreateArgs { args, ifs } = self.create_args(config)?;
         debug!("Start jail"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" => args.clone().join(" "));
         let id = start_jail(&self.idx.uuid, args)?;
         let id_str = id.to_string();
@@ -77,12 +81,12 @@ impl<'a> Jail<'a> {
             let mut target_name = jprefix.clone();
             target_name.push_str(iface.iface.as_str());
             let args = vec![epair, String::from("name"), target_name];
-            debug!("renaiming epair"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" => args.clone().join(" "));
+            debug!("destroying epair"; "vm" => self.idx.uuid.hyphenated().to_string(), "args" => args.clone().join(" "));
             let output = Command::new(IFCONFIG).args(args.clone()).output().expect(
                 "ifconfig failed",
             );
             if !output.status.success() {
-                crit!("failed to rename interface"; "vm" => self.idx.uuid.hyphenated().to_string());
+                crit!("failed to destroy interface"; "vm" => self.idx.uuid.hyphenated().to_string());
             }
         }
         Ok(0)
@@ -92,9 +96,9 @@ impl<'a> Jail<'a> {
     /// stops a jail
     pub fn stop(&self, config: &Config) -> Result<i32, Box<Error>> {
         debug!("Dleting jail"; "vm" => self.idx.uuid.hyphenated().to_string());
-        let brand = Brand::load(self.config.brand.as_str(), config)?;
+        let brand = self.brand(config)?;
 
-        brand.halt.run(self, config)?;
+        brand.halt.run(self, config).expect("brand halt failed");;
 
         let output = Command::new(JAIL)
             .args(&["-r", self.idx.uuid.hyphenated().to_string().as_str()])
@@ -161,6 +165,72 @@ impl<'a> Jail<'a> {
         }
         Ok(0)
     }
+
+    fn create_args(&self, config: &Config) -> Result<CreateArgs, Box<Error>> {
+
+        let brand = self.brand(config)?;
+
+
+        let uuid = self.idx.uuid.hyphenated().to_string();
+        let mut name = String::from("name=");
+        name.push_str(uuid.as_str());
+        let mut path = String::from("path=/");
+        path.push_str(self.idx.root.as_str());
+        path.push_str("/root");
+        let mut hostuuid = String::from("host.hostuuid=");
+        hostuuid.push_str(uuid.as_str());
+        let mut hostname = String::from("host.hostname=");
+        hostname.push_str(self.config.hostname.as_str());
+        let mut args = vec![
+            String::from("-i"),
+            String::from("-c"),
+            String::from("persist"),
+            name,
+            path,
+            hostuuid,
+            hostname,
+        ];
+        let mut ifs = Vec::new();
+
+        // Basic stuff I don't know what it does
+        let mut devfs_ruleset = String::from("devfs_ruleset=");
+        devfs_ruleset.push_str(config.settings.devfs_ruleset.to_string().as_str());
+        args.push(devfs_ruleset);
+        args.push(String::from("securelevel=2"));
+        args.push(String::from("sysvmsg=new"));
+        args.push(String::from("sysvsem=new"));
+        args.push(String::from("sysvshm=new"));
+
+        // for nested jails
+        args.push(String::from("allow.raw_sockets"));
+        args.push(String::from("children.max=1"));
+
+        // let mut exec_stop = String::from("exec.stop=");
+        let mut exec_start = String::from("exec.start=");
+        args.push(String::from("vnet=new"));
+        for nic in self.config.nics.iter() {
+            // see https://lists.freebsd.org/pipermail/freebsd-jail//2016-December/003305.html
+            let iface: IFace = nic.get_iface(config, &self.idx.uuid)?;
+            ifs.push(iface.clone());
+            let mut vnet_iface = String::from("vnet.interface=");
+            vnet_iface.push_str(iface.epair.as_str());
+            vnet_iface.push('b');
+
+            args.push(vnet_iface);
+
+            exec_start.push_str(iface.start_script.as_str());
+        }
+        if !self.config.nics.is_empty() {
+            exec_start.push_str("/sbin/ifconfig lo0 127.0.0.1 up; ");
+        };
+
+        brand.init.run(self, config).expect("brand init failed");
+
+        // inner jail configuration
+        exec_start.push_str(brand.boot.to_string(self, config).as_str());
+        args.push(exec_start);
+        Ok(CreateArgs { args, ifs })
+    }
 }
 
 #[cfg(not(target_os = "freebsd"))]
@@ -189,79 +259,6 @@ fn start_jail(uuid: &Uuid, args: Vec<String>) -> Result<u64, Box<Error>> {
     }
 }
 
-fn create_args(config: &Config, jail: &Jail) -> Result<CreateArgs, Box<Error>> {
-    let uuid = jail.idx.uuid.hyphenated().to_string();
-    let mut name = String::from("name=");
-    name.push_str(uuid.as_str());
-    let mut path = String::from("path=/");
-    path.push_str(jail.idx.root.as_str());
-    path.push_str("/root");
-    let mut hostuuid = String::from("host.hostuuid=");
-    hostuuid.push_str(uuid.as_str());
-    let mut hostname = String::from("host.hostname=");
-    hostname.push_str(jail.config.hostname.as_str());
-    let mut args = vec![
-        String::from("-i"),
-        String::from("-c"),
-        String::from("persist"),
-        name,
-        path,
-        hostuuid,
-        hostname,
-    ];
-    let mut ifs = Vec::new();
-
-    // Basic stuff I don't know what it does
-    let mut devfs_ruleset = String::from("devfs_ruleset=");
-    devfs_ruleset.push_str(config.settings.devfs_ruleset.to_string().as_str());
-    args.push(devfs_ruleset);
-    args.push(String::from("securelevel=2"));
-    args.push(String::from("sysvmsg=new"));
-    args.push(String::from("sysvsem=new"));
-    args.push(String::from("sysvshm=new"));
-
-    // for nested jails
-    args.push(String::from("allow.raw_sockets"));
-    args.push(String::from("children.max=1"));
-
-
-    // let mut exec_stop = String::from("exec.stop=");
-    let mut exec_start = String::from("exec.start=");
-    args.push(String::from("vnet=new"));
-    for nic in jail.config.nics.iter() {
-        // see https://lists.freebsd.org/pipermail/freebsd-jail//2016-December/003305.html
-        let iface: IFace = nic.get_iface(config, &jail.idx.uuid)?;
-        ifs.push(iface.clone());
-        let mut vnet_iface = String::from("vnet.interface=");
-        vnet_iface.push_str(iface.epair.as_str());
-        vnet_iface.push('b');
-
-        args.push(vnet_iface);
-
-        exec_start.push_str(iface.start_script.as_str());
-    }
-    if !jail.config.nics.is_empty() {
-        exec_start.push_str("/sbin/ifconfig lo0 127.0.0.1 up; ");
-    };
-    // inner jail configuration
-    exec_start.push_str("jail -c");
-    exec_start.push_str(" persist name=");
-    exec_start.push_str(uuid.as_str());
-    exec_start.push_str(" host.hostname=");
-    exec_start.push_str(jail.config.hostname.as_str());
-    exec_start.push_str(" path=/jail");
-    exec_start.push_str(" ip4=inherit");
-    exec_start.push_str(" devfs_ruleset=4");
-    exec_start.push_str(" securelevel=2");
-    exec_start.push_str(" sysvmsg=new");
-    exec_start.push_str(" sysvsem=new");
-    exec_start.push_str(" sysvshm=new");
-    exec_start.push_str(" allow.raw_sockets");
-    exec_start.push_str(" exec.start='sh /etc/rc'");
-
-    args.push(exec_start);
-    Ok(CreateArgs { args, ifs })
-}
 
 /// reads the zfs datasets in a pool
 #[cfg(target_os = "freebsd")]

@@ -69,6 +69,11 @@ impl Step {
                "brand" => jail.config.brand.as_str());
         Command::new(command).args(args).output()
     }
+    pub fn to_string(&self, jail: &Jail, conf: &Config) -> String {
+        let mut cmd = self.cmd(jail, conf);
+        cmd.push_str(self.args(jail, conf).join(" ").as_str());
+        cmd
+    }
 }
 #[derive(Debug, Deserialize)]
 pub struct Brand {
