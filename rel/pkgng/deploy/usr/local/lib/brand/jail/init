@@ -9,7 +9,8 @@ jail_root="$2"
 validate_root "${jail_root}"
 
 brands_src=$(dirname ${brand_root})
-brands_target="${jail_root}/root/${brands_dir}"
+brands_target="${jail_root}/root/${brands_src}"
+
 # delete the old brand
 rm -r ${brands_target}
 
