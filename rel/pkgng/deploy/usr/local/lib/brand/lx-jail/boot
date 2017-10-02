@@ -21,6 +21,7 @@ then
     init_script='/etc/init.d/rc 3'
 elif [ "${distro}" = "debian" ]
 then
+    #TODO: is this right?
     init_script='/etc/init.d/rc 3'
 else
     echo "Unsupported distro: ${distro}"
