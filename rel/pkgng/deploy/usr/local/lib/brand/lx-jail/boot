@@ -3,17 +3,14 @@
 # Note this gets executed INSIDE the outer jail not on the host!
 
 brand_root="$1"
-jail_root="$2"
-uuid="$3"
-hostname="$4"
+uuid="$2"
+hostname="$3"
 
 # include shared utility functions
 . ${brand_root}/../shared/utils.sh
 . ${brand_root}/lx-utils.sh
 
-validate_root "${jail_root}"
-
-distro=$(detect_distro "${jail_root}/root/jail")
+distro=$(detect_distro "/jail")
 
 
 if [ "${distro}" = "redhat" ]

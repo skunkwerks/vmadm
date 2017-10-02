@@ -25,7 +25,7 @@ args=["{brand_root}", "{jail_root}"]
 # boot the inner zone
 [boot]
 cmd="{brand_root}/boot"
-args=["{brand_root}", "{jail_root}", "{jail_uuid}", "{hostname}"]
+args=["{brand_root}", "{jail_uuid}", "{hostname}"]
 
 # Halt the jail executed on the host before
 # rctl and interfaces are torn down, the outer
