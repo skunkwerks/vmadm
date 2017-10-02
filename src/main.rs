@@ -55,6 +55,7 @@ use std::fs::File;
 use aud::{Failure, Adventure, Saga};
 
 mod brand;
+use brand::Brand;
 mod zfs;
 mod images;
 mod jails;
@@ -386,6 +387,7 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
     dataset.push('/');
     dataset.push_str(jail.image_uuid.hyphenated().to_string().as_str());
 
+    #[derive(Debug, Clone)]
     struct CreateState<'a> {
         conf: &'a Config,
         uuid: Uuid,
@@ -497,10 +499,35 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
             None => state,
         }
     }
+
+    fn brand_install_up(state: CreateState) -> Result<CreateState, Failure<CreateState>> {
+        match Brand::load(state.config.brand.as_str(), state.conf) {
+            Err(_) => Err(Failure::new(state, GenericError::bx("invalid brand"))),
+            Ok(brand)  => {
+                let s1 = state.clone();
+                let jail = Jail{
+                    idx: & s1.entry.unwrap(),
+                    config: s1.config,
+                    inner: None,
+                    outer: None,
+                };
+                match brand.install.output(&jail, state.conf) {
+                    Ok(_) => Ok(state),
+                    Err(_) => Err(Failure::new(state, GenericError::bx("failed to initilize brand")))
+                }
+
+            }
+        }
+    }
+    fn brand_install_down(state: CreateState) -> CreateState {
+        crit!("Rolling back clone");
+        state
+    }
     let saga = Saga::new(vec![
         Adventure::new(insert_up, insert_down),
         Adventure::new(snap_up, snap_down),
         Adventure::new(clone_up, clone_down),
+        Adventure::new(brand_install_up, brand_install_down),
     ]);
     match saga.tell(state) {
         Ok(state) => {
