@@ -19,7 +19,7 @@ mkdir -p ${brands_target}
 
 # copy over our brand
 cp -r ${brand_root} ${brands_target}
-cp -r ${brands_src}/share ${brands_target}
+cp -r ${brands_src}/shared ${brands_target}
 
 # mount devfs (not sure about this)
 
