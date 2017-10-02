@@ -7,7 +7,7 @@ PKG_HOMEPAGE ?=https://project-fifo.net
 
 .PHONY: package_list dep_list clean-pkg
 
-package: prepare $(STAGE_DIR)/+MANIFEST $(STAGE_DIR)/plist
+package: prepclean prepare $(STAGE_DIR)/+MANIFEST $(STAGE_DIR)/plist
 	cp +POST_INSTALL $(STAGE_DIR)/
 	pkg create -m $(STAGE_DIR)/ -r $(STAGE_DIR)/ -p $(STAGE_DIR)/plist -o .
 
@@ -26,3 +26,7 @@ $(STAGE_DIR)/+MANIFEST: +MANIFEST.in
 clean-pkg:
 
 clean: clean-pkg
+
+prepclean:
+	-rm $(STAGE_DIR)/+*
+	-rm $(STAGE_DIR)/plist

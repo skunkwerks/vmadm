@@ -7,7 +7,7 @@ include pkgng.mk
 
 .PHONY: prepare
 
-prepare:
+prepare: miniclean
 	mkdir -p $(STAGE_DIR)/$(INSTALL_DIR)
 	mkdir -p $(STAGE_DIR)/usr/local/etc/vmadm
 	mkdir -p $(STAGE_DIR)/var/imgadm/images
