@@ -12,7 +12,8 @@ URL_ARCH=${ARCH};
 case "${ARCH}" in
     amd64)
         ARCH=x86_64;
-        ARCH_URL=x86_64;
+        # freebsd does not support 64 bit linux :/
+        ARCH_URL=x86;
         ;;
     *)
         echo only x86 is supported
