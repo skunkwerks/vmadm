@@ -1,7 +1,5 @@
 #!/usr/local/bin/bash
-#set -x
-declare -a DIRS=("bin" "dev" "mnt" "proc" "tmp" "etc/defaults")
-declare -a EXECS=("COPYRIGHT" "/libexec/ld-elf.so.1" "bin/sh" "/sbin/ifconfig" "/sbin/route" "usr/sbin/jail")
+set -e
 
 if [ "$#" -ne 2 ] ; then
   echo "Usage: $0 <ubuntu|debian|centos|suse|fedora|scientific>  <version>" >&2
@@ -16,7 +14,7 @@ case "${ARCH}" in
         ARCH=x86_64;
         ARCH_URL=x86_64;
         ;;
-    arm64)
+    *)
         echo only x86 is supported
         exit 1
         ;;
@@ -45,31 +43,6 @@ fi
 ID=$(uuidgen)
 
 zfs create -p ${ROOT}/$ID
-
->&2 echo "Prepping outside jail..."
-
-declare -a FILES
-
-for d in "${DIRS[@]}"
-do
-    mkdir -p /${ROOT}/$ID/root/$d
-    chown root:wheel /${ROOT}/$ID/root/$d
-    chmod 775 /${ROOT}/$ID/root/$d
-done
-
-cp /etc/defaults/devfs.rules /${ROOT}/$ID/root/etc/defaults
-
-for e in "${EXECS[@]}"
-do
-    FILES=("${FILES[@]}" $(ldd -a /$e 2> /dev/null | awk '/=>/{print $(NF-1)}'))
-    FILES=("${FILES[@]}" "$e")
-done
-
-for f in "${FILES[@]}"
-do
-    mkdir -p /${ROOT}/$ID/root/$(dirname $f)
-    cp /$f /${ROOT}/$ID/root/$f
-done
 
 >&2 echo "Prepping solitary confinement"
 mkdir -p /${ROOT}/${ID}/root/jail
@@ -115,6 +88,12 @@ cat <<EOF > $ID.json
   "disabled": false
 }
 EOF
+
+IMG_FILE=/var/imgadm/images/$(echo $ROOT | sed 's/\//-/g')-$ID.json
+
+echo  "{\"zpool\":\"${ROOT}\", \"manifest\":" > $IMG_FILE
+cat $ID.json >> $IMG_FILE
+echo "}" >> $IMG_FILE
 
 >&2 echo "Jail is ready. Snapshot if needed"
 echo $ID
