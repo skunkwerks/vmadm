@@ -29,7 +29,7 @@ done
 cp /etc/defaults/devfs.rules ${jail_root}/$ID/root/etc/defaults
 
 ## required files:
-execs='/libexec/ld-elf.so.1 /bin/fgrep /bin/sh /sbin/ifconfig /sbin/route /usr/sbin/jail'
+execs='/libexec/ld-elf.so.1 /usr/bin/fgrep /bin/sh /sbin/ifconfig /sbin/route /usr/sbin/jail'
 files=""
 ## inlcude libraries that are needed
 for e in ${execs}
