@@ -40,7 +40,7 @@ detect_distro() {
     if [ -f ${jail_root}/etc/redhat-release ]; then
 	      echo "redhat"
     elif [ -f ${jail_root}/etc/lsb-release ]; then
-	      if fgrep -s Ubuntu ${jail_root}/etc/lsb-release; then
+	      if fgrep -s Ubuntu ${jail_root}/etc/lsb-release > /dev/null; then
 		        echo "ubuntu"
 	      elif [ -f ${jail_root}/etc/debian_version ]; then
 		        echo "debian"
