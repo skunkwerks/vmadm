@@ -35,7 +35,7 @@ bsd:
     - export ARCH=$(uname -m)
     - export BRANCH=$(if [ "$CI_BUILD_REF_NAME" = "master" ]; then echo rel; else echo dev; fi)
     - gmake dist
-    - s3cmd put rel/pkgng/*.txz  s3://freebsd.project-fifo.net/$BRANCH/$ARCH/$OS_VER/
+    - aws s3 cp rel/pkgng/*.txz  s3://freebsd.project-fifo.net/$BRANCH/$ARCH/$OS_VER/
     - 'curl --request POST --form "token=$CI_JOB_TOKEN" --form "ref=master" --form "variables[ARCH]=$ARCH" --form "variables[OS_VER]=$OS_VER" --form "variables[BRANCH]=$BRANCH" https://gitlab.com/api/v4/projects/$PKGNG_REPO_PID/trigger/pipeline'
   tags:
     - erlang-19
