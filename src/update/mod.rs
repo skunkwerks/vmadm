@@ -184,7 +184,6 @@ impl JailUpdate {
             c.nics.push(nic.clone());
         }
         for update in self.update_nics.iter() {
-
             c.nics = match update.primary {
                 Some(true) =>
                     c.nics.iter().map(|nic| {
@@ -221,6 +220,7 @@ fn empty_nics() -> Vec<NIC> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap as Map;
     use jail_config::JailConfig;
     use update::*;
     use uuid::Uuid;
@@ -292,6 +292,9 @@ mod tests {
             owner_uuid: None,
             package_name: None,
             package_version: None,
+            resolvers: Vec::new(),
+            customer_metadata: Map::new(),
+            internal_metadata: Map::new(),
         }
     }
 
