@@ -41,10 +41,12 @@ done
 
 # install the branch information
 
-mkdir -p ${jail_root}/root$(dirname ${brand_root})
-cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})
+install_brand_files ${brand_root} ${jail_root}
+
+install_etc_resolv_conf ${jail_root}
+
+install_authorized_keys ${jail_root}
 
 #TODO: network config:
-# * get resolvers and set them resolvers
 # * routs? (do we need to set them?)
 #TODO: get rood autorized keys set set them

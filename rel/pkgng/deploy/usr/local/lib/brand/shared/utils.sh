@@ -67,3 +67,31 @@ clean_outer_root() {
          -delete
 
 }
+
+install_etc_resolv_conf() {
+    jail_root=$1
+    if [ -f "${jail_root}/root/config/resolvers" ]
+    then
+        for r in $(cat "${jail_root}/root/config/resolvers")
+        do
+            echo "nameserver ${r}" >> ${jail_root}/root/jail/etc/resolv.conf
+        done
+    fi
+}
+install_authorized_keys() {
+    jail_root=$1
+    if [ -f "${jail_root}/root/config/root_authorized_keys" ]
+    then
+        mkdir -p "${jail_root}/root/jail/root/.ssh"
+        cp "${jail_root}/root/config/root_authorized_keys" "${jail_root}/root/jail/root/.ssh/authorized_keys"
+    fi
+
+}
+
+expand_linked() {
+    for file in $1
+    do
+        echo "${file}"
+        ldd -a "${file}" 2> /dev/null | awk '/=>/{print $(NF-1)}'
+    done
+}

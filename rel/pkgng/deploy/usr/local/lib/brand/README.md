@@ -43,4 +43,15 @@ This calls and the arguments can take placeholders:
 * `{brand_root}` - root of this brand
 * `{hostname}` - hostname of the jail
 
-An example can be found in the `jail` or `lx-jail` folders
+An example can be found in the `jail` or `lx-jail` folders.
+
+There are two well defined directories in a jail:
+
+- `/jail` the root jail
+- `/config`
+
+The `/config` directoy might hold the following files:
+
+- `/config/resolvers` configured resolvers one resolver per line
+- `/config/root_authorized_keys` - authorized ssh keys for the root user
+- `/config/user_script` - a script the user has asked to be executed on boot
