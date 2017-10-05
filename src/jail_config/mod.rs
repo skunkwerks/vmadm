@@ -16,6 +16,7 @@ use uuid::Uuid;
 use regex::Regex;
 use rand::{thread_rng, Rng};
 
+use std::collections::BTreeMap as Map;
 
 /// Jail configuration values
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -204,6 +205,8 @@ pub struct JailConfig {
     /// hostname of the jail
     pub hostname: String,
 
+    #[serde(default = "empty_resolvers")]
+    pub resolvers: Vec<String>,
     /// weather to start this jail on --startup
     #[serde(default = "dflt_false")]
     pub autoboot: bool,
@@ -264,8 +267,10 @@ pub struct JailConfig {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub package_version: Option<String>,
     // TODO:
-    // customer_metadata: KV
-    // internal_metadata: KV
+    #[serde(default = "empty_map")]
+    pub customer_metadata: Map<String, String>,
+    #[serde(default = "empty_map")]
+    pub internal_metadata: Map<String, String>,
     // internal_metadata_namespaces: Vec<String>
     // zfs_data_compression
 }
@@ -459,8 +464,15 @@ fn empty_nics() -> Vec<NIC> {
     Vec::new()
 }
 
+fn empty_resolvers() -> Vec<String> {
+    Vec::new()
+}
 fn dflt_brand() -> String {
     String::from("jail")
+}
+
+fn empty_map() -> Map<String, String> {
+    Map::new()
 }
 
 fn new_mac() -> String {

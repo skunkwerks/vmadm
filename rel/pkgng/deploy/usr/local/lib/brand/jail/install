@@ -9,13 +9,7 @@ jail_root="$2"
 
 validate_root "${jail_root}"
 
-## Find files that do not beling in the jail root, which is everything but
-## jail, the rest will be populated by us
-find ${jail_root}/root \
-     -not -path "${jail_root}/root/jail" \
-     -not -path "${jail_root}/root/jail/*" \
-     -not -path "${jail_root}/root"\
-     -delete
+clean_outer_root "${jail_root}"
 
 # create bas
 
@@ -53,6 +47,21 @@ cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})
 
 mkdir -p ${jail_root}/root$(dirname ${brand_root})/../shared
 cp -r ${brand_root} ${jail_root}/root$(dirname ${brand_root})/../shared
+
+
+if [ -f "${jail_root}/root/config/resolvers" ]
+then
+    for r in $(cat "${jail_root}/root/config/resolvers")
+    do
+        echo "nameserver ${r}" >> ${jail_root}/root/jail/etc/resolv.conf
+    done
+fi
+
+if [ -f "${jail_root}/root/config/root_authorized_keys" ]
+then
+    mkdir -p "${jail_root}/root/jail/root/.ssh"
+    cp "${jail_root}/root/config/root_authorized_keys" "${jail_root}/root/jail/root/.ssh/authorized_keys"
+fi
 
 #TODO: network config:
 # * get resolvers and set them resolvers

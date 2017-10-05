@@ -51,3 +51,19 @@ install_brand_files() {
     cp -r ${brands_src}/shared ${brands_target}
 
 }
+
+
+## Find files that do not beling in the jail root, which is everything but
+## jail, the rest will be populated by us
+clean_outer_root() {
+    jail_root=$1
+    validate_root "${jail_root}"
+    find "${jail_root}/root" \
+         -not -path "${jail_root}/root/config" \
+         -not -path "${jail_root}/root/config/*" \
+         -not -path "${jail_root}/root/jail" \
+         -not -path "${jail_root}/root/jail/*" \
+         -not -path "${jail_root}/root" \
+         -delete
+
+}

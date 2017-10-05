@@ -500,17 +500,43 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
         }
     }
 
+    fn init_up<'a>(state: CreateState<'a>) -> Result<CreateState<'a>, Failure<CreateState<'a>>> {
+        let s1 = state.clone();
+        let jail = Jail{
+            idx: & s1.entry.unwrap(),
+            config: s1.config,
+            inner: None,
+            outer: None,
+        };
+        let state1 = CreateState{
+            conf: state.conf,
+            uuid: state.uuid,
+            dataset: state.dataset,
+            config: state.config,
+            entry: state.entry,
+            snapshot: state.snapshot,
+            root: state.root,
+         };
+        match jail.init(state1.conf) {
+            Ok(_) => Ok(state1),
+            Err(err) => Err(Failure::new(state1, err))
+        }
+    }
+    fn init_down(state: CreateState) -> CreateState {
+        crit!("Rolling back init");
+        state
+    }
     fn brand_install_up(state: CreateState) -> Result<CreateState, Failure<CreateState>> {
+        let s1 = state.clone();
+        let jail = Jail{
+            idx: & s1.entry.unwrap().clone(),
+            config: s1.config,
+            inner: None,
+            outer: None,
+        };
         match Brand::load(state.config.brand.as_str(), state.conf) {
             Err(_) => Err(Failure::new(state, GenericError::bx("invalid brand"))),
             Ok(brand)  => {
-                let s1 = state.clone();
-                let jail = Jail{
-                    idx: & s1.entry.unwrap(),
-                    config: s1.config,
-                    inner: None,
-                    outer: None,
-                };
                 match brand.install.output(&jail, state.conf) {
                     Ok(_) => Ok(state),
                     Err(_) => Err(Failure::new(state, GenericError::bx("failed to initilize brand")))
@@ -527,6 +553,7 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
         Adventure::new(insert_up, insert_down),
         Adventure::new(snap_up, snap_down),
         Adventure::new(clone_up, clone_down),
+        Adventure::new(init_up, init_down),
         Adventure::new(brand_install_up, brand_install_down),
     ]);
     match saga.tell(state) {
