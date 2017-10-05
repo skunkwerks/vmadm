@@ -1,3 +1,4 @@
+
 use std::io::{Read, Seek, SeekFrom};
 use std::error::Error;
 use std::fs::{self, File};
@@ -197,7 +198,7 @@ pub fn import(config: &Config, uuid: Uuid) -> Result<i32, Box<Error>> {
     url.push_str(uuid_str.as_str());
 
     if zfs::is_present(dataset.as_str()) {
-            return Err(GenericError::bx("Dataset already present"));
+            return Err(GenericError::bx("Image already imported"));
     };
 
     debug!("Fethcing image"; "repo" => config.settings.repo.clone(),
@@ -220,7 +221,7 @@ pub fn import(config: &Config, uuid: Uuid) -> Result<i32, Box<Error>> {
     url.push_str("/file");
     let mut out: File = tempfile::tempfile()?;
     let mut resp = reqwest::get(url.as_str())?;
-    println!("Downloading {} ...", uuid_str.as_str());
+    println!("Importing {} ...", uuid_str.as_str());
     copy(&mut resp, &mut out)?;
     println!("Importing {} ...", uuid_str.as_str());
     out.seek(SeekFrom::Start(0))?;
