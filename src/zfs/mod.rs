@@ -109,6 +109,26 @@ pub fn origin(dataset: &str) -> Result<String, Box<Error>> {
 //     }
 // }
 
+/// sets the quota in gigabyte for a dataset
+pub fn quota(dataset: &str, quota: u64) -> Result<u32, Box<Error>> {
+    let dataset = String::from(dataset);
+    let mut set = String::from("quota=");
+    set.push_str(quota.to_string().as_str());
+    set.push('G');
+
+    let args = vec!["set", set.as_str(), dataset.as_str()];
+    debug!("Setting ZFS snapshot"; "dataset" => dataset.clone(), "quota" => set.clone(),
+           "args" => args.clone().join(" "));
+    let output = Command::new("zfs").args(args).output().expect(
+        "zfs set failed",
+    );
+    if output.status.success() {
+        Ok(0)
+    } else {
+        Err(GenericError::bx("Failed set quota"))
+    }
+}
+
 /// create a zfs snapshot of a dataset
 pub fn snapshot(dataset: &str, snapshot: &str) -> Result<String, Box<Error>> {
     let mut snap = String::from(dataset);

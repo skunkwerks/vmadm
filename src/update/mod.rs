@@ -4,7 +4,8 @@ use std::error::Error;
 use std::io::Read;
 use serde_json;
 use uuid::Uuid;
-
+use jdb::IdxEntry;
+use zfs;
 
 macro_rules! update {
     ( $src:ident, $target:ident; $($field:ident),+)  => (
@@ -94,7 +95,7 @@ pub struct JailUpdate {
     /// mac cpu usage 100 = 1 core (pcpu)
     cpu_cap: Option<u64>,
     /// max quota (zfs quota)
-    //    quota: u64,
+    quota: Option<u64>,
     /// SysV shared memory size, in bytes (shmsize)
     max_shm_memory: Option<u64>,
 
@@ -150,13 +151,14 @@ impl JailUpdate {
             owner_uuid: None,
             package_name: None,
             package_version: None,
+            quota: None,
             add_nics: vec![],
             remove_nics: vec![],
             update_nics: vec![],
 
         }
     }
-    pub fn apply(&self, config: JailConfig) -> JailConfig {
+    pub fn apply(&self, config: JailConfig, index: &IdxEntry) -> Result<JailConfig, Box<Error>> {
         let mut c = config.clone();
         update!(self, c;
                 autoboot,
@@ -178,7 +180,6 @@ impl JailUpdate {
             package_version
         );
 
-
         c.nics.retain(|nic| !self.remove_nics.contains(&nic.mac));
         for nic in self.add_nics.iter() {
             c.nics.push(nic.clone());
@@ -198,7 +199,10 @@ impl JailUpdate {
 
         }
 
-        return c;
+        if self.quota.is_some() {
+            zfs::quota(index.root.as_str(), self.quota.unwrap())?;
+        }
+        return Ok(c);
     }
 }
 
@@ -224,6 +228,7 @@ mod tests {
     use jail_config::JailConfig;
     use update::*;
     use uuid::Uuid;
+    use jdb::IdxEntry;
 
     fn nic00() -> NIC {
         NIC{
@@ -307,7 +312,7 @@ mod tests {
     fn empty() {
         let conf = conf();
         let update = JailUpdate::empty();
-        let conf1 = update.apply(conf.clone());
+        let conf1 = update.apply(conf.clone(), &IdxEntry::empty()).unwrap();
         assert_eq!(conf, conf1);
     }
     #[test]
@@ -316,7 +321,7 @@ mod tests {
         let mut update = JailUpdate::empty();
         let alias = String::from("changed");
         update.alias = Some(alias.clone());
-        assert_eq!(alias, update.apply(conf).alias);
+        assert_eq!(alias, update.apply(conf, &IdxEntry::empty()).unwrap().alias);
     }
     #[test]
     fn hostname() {
@@ -324,7 +329,7 @@ mod tests {
         let mut update = JailUpdate::empty();
         let hostname = String::from("changed");
         update.hostname = Some(hostname.clone());
-        assert_eq!(hostname, update.apply(conf).hostname);
+        assert_eq!(hostname, update.apply(conf, &IdxEntry::empty()).unwrap().hostname);
     }
     #[test]
     fn autoboot() {
@@ -332,7 +337,7 @@ mod tests {
         assert_eq!(true, conf.autoboot);
         let mut update = JailUpdate::empty();
         update.autoboot = Some(false);
-        assert_eq!(false, update.apply(conf).autoboot);
+        assert_eq!(false, update.apply(conf, &IdxEntry::empty()).unwrap().autoboot);
     }
     #[test]
     fn max_physical_memory() {
@@ -340,7 +345,7 @@ mod tests {
         assert_eq!(1024, conf.max_physical_memory);
         let mut update = JailUpdate::empty();
         update.max_physical_memory = Some(42);
-        assert_eq!(42, update.apply(conf).max_physical_memory);
+        assert_eq!(42, update.apply(conf, &IdxEntry::empty()).unwrap().max_physical_memory);
     }
     #[test]
     fn max_locked_memory() {
@@ -348,7 +353,7 @@ mod tests {
         assert_eq!(None, conf.max_locked_memory);
         let mut update = JailUpdate::empty();
         update.max_locked_memory = Some(42);
-        assert_eq!(42, update.apply(conf).max_locked_memory.unwrap());
+        assert_eq!(42, update.apply(conf, &IdxEntry::empty()).unwrap().max_locked_memory.unwrap());
     }
     #[test]
     fn max_lwps() {
@@ -356,7 +361,7 @@ mod tests {
         assert_eq!(2000, conf.max_lwps);
         let mut update = JailUpdate::empty();
         update.max_lwps = Some(42);
-        assert_eq!(42, update.apply(conf).max_lwps);
+        assert_eq!(42, update.apply(conf, &IdxEntry::empty()).unwrap().max_lwps);
     }
     #[test]
     fn archive_on_delete() {
@@ -364,7 +369,7 @@ mod tests {
         assert_eq!(None, conf.archive_on_delete);
         let mut update = JailUpdate::empty();
         update.archive_on_delete = Some(true);
-        assert_eq!(true, update.apply(conf).archive_on_delete.unwrap());
+        assert_eq!(true, update.apply(conf, &IdxEntry::empty()).unwrap().archive_on_delete.unwrap());
     }
     #[test]
     fn billing_id() {
@@ -372,7 +377,7 @@ mod tests {
         assert_eq!(None, conf.billing_id);
         let mut update = JailUpdate::empty();
         update.billing_id = Some(uuid());
-        assert_eq!(uuid(), update.apply(conf).billing_id.unwrap());
+        assert_eq!(uuid(), update.apply(conf, &IdxEntry::empty()).unwrap().billing_id.unwrap());
     }
     #[test]
     fn no_not_inventory() {
@@ -380,7 +385,7 @@ mod tests {
         assert_eq!(None, conf.do_not_inventory);
         let mut update = JailUpdate::empty();
         update.do_not_inventory = Some(true);
-        assert_eq!(true, update.apply(conf).do_not_inventory.unwrap());
+        assert_eq!(true, update.apply(conf, &IdxEntry::empty()).unwrap().do_not_inventory.unwrap());
     }
     #[test]
     fn dns_domain() {
@@ -388,7 +393,7 @@ mod tests {
         let mut update = JailUpdate::empty();
         let dns_domain = String::from("changed");
         update.dns_domain = Some(dns_domain.clone());
-        assert_eq!(dns_domain, update.apply(conf).dns_domain);
+        assert_eq!(dns_domain, update.apply(conf, &IdxEntry::empty()).unwrap().dns_domain);
     }
     #[test]
     fn owner_uuid() {
@@ -396,7 +401,7 @@ mod tests {
         assert_eq!(None, conf.owner_uuid);
         let mut update = JailUpdate::empty();
         update.owner_uuid = Some(uuid());
-        assert_eq!(uuid(), update.apply(conf).owner_uuid.unwrap());
+        assert_eq!(uuid(), update.apply(conf, &IdxEntry::empty()).unwrap().owner_uuid.unwrap());
     }
     #[test]
     fn package_name() {
@@ -404,7 +409,7 @@ mod tests {
         let mut update = JailUpdate::empty();
         let package_name = String::from("changed");
         update.package_name = Some(package_name.clone());
-        assert_eq!(package_name, update.apply(conf).package_name.unwrap());
+        assert_eq!(package_name, update.apply(conf, &IdxEntry::empty()).unwrap().package_name.unwrap());
     }
     #[test]
     fn package_version() {
@@ -412,7 +417,7 @@ mod tests {
         let mut update = JailUpdate::empty();
         let package_version = String::from("changed");
         update.package_version = Some(package_version.clone());
-        assert_eq!(package_version, update.apply(conf).package_version.unwrap());
+        assert_eq!(package_version, update.apply(conf, &IdxEntry::empty()).unwrap().package_version.unwrap());
     }
 
     #[test]
@@ -421,14 +426,14 @@ mod tests {
         let mut update = JailUpdate::empty();
         let mac = String::from("00:00:00:00:00:00");
         update.remove_nics = vec![mac];
-        assert_eq!(vec![nic01()], update.apply(conf).nics);
+        assert_eq!(vec![nic01()], update.apply(conf, &IdxEntry::empty()).unwrap().nics);
     }
     #[test]
     fn add_nics() {
         let conf = conf();
         let mut update = JailUpdate::empty();
         update.add_nics = vec![nic02()];
-        assert_eq!(vec![nic00(), nic01(), nic02()], update.apply(conf).nics);
+        assert_eq!(vec![nic00(), nic01(), nic02()], update.apply(conf, &IdxEntry::empty()).unwrap().nics);
     }
 
     #[test]
@@ -438,7 +443,7 @@ mod tests {
         let mut nic_update = NICUpdate::empty(nic01().mac.clone());
         nic_update.primary = Some(true);
         update.update_nics = vec![nic_update];
-        let conf1 = update.apply(conf.clone());
+        let conf1 = update.apply(conf.clone(), &IdxEntry::empty()).unwrap();
 
         assert_eq!(false, conf1.nics[0].primary);
         assert_eq!(true, conf1.nics[1].primary);
