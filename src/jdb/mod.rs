@@ -35,6 +35,18 @@ pub struct IdxEntry {
     jail_type: String,
 }
 
+#[cfg(test)]
+impl IdxEntry {
+    pub fn empty() -> Self {
+        IdxEntry {
+            version: 1,
+            uuid: Uuid::nil(),
+            root: String::from("zroot"),
+            state: String::from("stopped"),
+            jail_type: String::from("jail"),
+        }
+    }
+}
 
 
 impl PartialEq for IdxEntry {

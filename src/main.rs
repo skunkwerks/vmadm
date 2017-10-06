@@ -350,7 +350,7 @@ fn list(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
 }
 
 fn update(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
-    let mut db = JDB::open(conf)?;
+    let db = JDB::open(conf)?;
     let uuid_string = value_t!(matches, "uuid", String).unwrap();
     let uuid = Uuid::parse_str(uuid_string.as_str()).unwrap();
     let update = match value_t!(matches, "file", String) {
@@ -365,8 +365,10 @@ fn update(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
     };
     match db.get(&uuid) {
         Err(e) => Err(e),
-        Ok(Jail { config: c, .. }) => {
-            let c = update.apply(c);
+        Ok(jail) => {
+            let c = update.apply(jail.config, jail.idx)?;
+            // TODO: This is ugly ...
+            let mut db = JDB::open(conf)?;
             db.update(c)
         }
     }
@@ -499,8 +501,22 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
             None => state,
         }
     }
+    fn quota_up(state: CreateState) -> Result<CreateState, Failure<CreateState>> {
+        let s1 = state.clone();
+        let entry = s1.entry.unwrap();
+        let root = entry.root.as_str();
+        let quota = s1.config.quota;
+        match zfs::quota(root, quota) {
+            Ok(_) => Ok(state),
+            Err(e) => Err(Failure::new(state, e)),
+        }
 
-    fn init_up<'a>(state: CreateState<'a>) -> Result<CreateState<'a>, Failure<CreateState<'a>>> {
+    }
+    fn quota_down(state: CreateState) -> CreateState {
+        crit!("Rolling back init");
+        state
+    }
+    fn init_up(state: CreateState) -> Result<CreateState, Failure<CreateState>> {
         let s1 = state.clone();
         let jail = Jail{
             idx: & s1.entry.unwrap(),
@@ -553,6 +569,7 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
         Adventure::new(insert_up, insert_down),
         Adventure::new(snap_up, snap_down),
         Adventure::new(clone_up, clone_down),
+        Adventure::new(quota_up, quota_down),
         Adventure::new(init_up, init_down),
         Adventure::new(brand_install_up, brand_install_down),
     ]);
