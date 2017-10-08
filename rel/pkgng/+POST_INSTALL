@@ -1,5 +1,16 @@
 #!/bin/sh
 
+if [ ! -d /usr/local/etc/vmadm  ]
+then 
+    mkdir -p /usr/local/etc/vmadm
+fi
+
+if [ ! -d /var/imgadm/images ]
+then 
+    mkdir -p /var/imgadm/images
+fi
+
+
 CONFFILE="/usr/local/etc/vmadm.toml"
 if [ ! -f $CONFFILE ]
 then
