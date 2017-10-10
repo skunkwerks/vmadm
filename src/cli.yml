@@ -125,6 +125,9 @@ subcommands:
           - import:
               about: lists available images
               args:
+                - quiet:
+                    short: q
+                    help: Quiet import
                 - uuid:
                     help: UUID if the image to get
                     index: 1
