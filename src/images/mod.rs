@@ -198,7 +198,8 @@ pub fn import(config: &Config, uuid: Uuid) -> Result<i32, Box<Error>> {
     url.push_str(uuid_str.as_str());
 
     if zfs::is_present(dataset.as_str()) {
-            return Err(GenericError::bx("Image already imported"));
+        let err = format!("Image {} already imported", uuid_str);
+        return Err(GenericError::bx(err.as_str()));
     };
 
     debug!("Fethcing image"; "repo" => config.settings.repo.clone(),
