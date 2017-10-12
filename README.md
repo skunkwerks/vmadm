@@ -2,6 +2,8 @@
 
 The goal of this is to provide a fast, efficient utility to manage BSD jails. The CLI is designed to mirror SmartOS's vmadm, and we borrow ideas from other Solaris zone utilities where applicable.
 
+The installation of vmadm [is documented here](http://docs.project-fifo.net/v0.9.3/docs/freebsd#section-add-package-repository).
+
 [![asciicast](https://asciinema.org/a/M8sjN0FC64JPBWZqjKIG5sx2q.png)](https://asciinema.org/a/M8sjN0FC64JPBWZqjKIG5sx2q)
 
 ## Design
