@@ -21,7 +21,7 @@ Images are ZFS datasets that get cloned for a new jail, both living under a give
 
 ```bash
 
-pkg install pkgconf openssl
+pkg install pkgconf openssl ca_root_nss
 ```
 
 ### bridge interface
