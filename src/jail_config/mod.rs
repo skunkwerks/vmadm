@@ -370,6 +370,14 @@ impl JailConfig {
                     "Invalid gateway",
                 ))
             }
+
+            if checkip(nic.ip.as_str())  {
+                errors.push(ValidationError::new(
+                    format!("nic[{}]", i).as_str(),
+                    "ip address already taken",
+                ))
+            }
+
             if !MAC_RE.is_match(nic.mac.as_str()) {
                 errors.push(ValidationError::new(
                     format!("nic[{}]", i).as_str(),
@@ -489,3 +497,13 @@ fn new_mac() -> String {
         rng.gen::<u8>()
     )
 }
+
+fn checkip(ipaddr: &str) -> bool {
+    debug!("Checking if ip address {} is used up ",ipaddr);
+    let output = Command::new("ping")
+        .args(&["-o","-c 1",ipaddr])
+        .output()
+	.expect("failed to ping");
+    output.status.success() 
+}
+
