@@ -115,7 +115,7 @@ impl NIC {
             format!(
                 "/sbin/ifconfig {epair}b.{vlan} create vlan {vlan} vlandev {epair}p; \
                 /sbin/ifconfig {epair}b.{vlan} name {iface}; \
-                /sbin/ifconfig {iface} inet {ip} {mask}; ",
+                /sbin/ifconfig {iface} inet {ip} netmask {mask}; ",
                 epair = epair,
                 ip = self.ip,
                 mask = self.netmask,
@@ -125,7 +125,7 @@ impl NIC {
         } else {
             format!(
                 "/sbin/ifconfig {epair}b name {iface}; \
-                /sbin/ifconfig {iface} inet {ip} {mask}; ",
+                /sbin/ifconfig {iface} inet {ip} netmask {mask}; ",
                 epair = epair,
                 ip = self.ip,
                 mask = self.netmask,
@@ -163,7 +163,7 @@ impl NIC {
                 "/sbin/ifconfig {epair}b name {iface}p; \
                 /sbin/ifconfig {iface}p.{vlan} create vlan {vlan} vlandev {iface}p; \
                 /sbin/ifconfig {iface}p.{vlan} name {iface}; \
-                /sbin/ifconfig {iface} inet {ip} {mask}; ",
+                /sbin/ifconfig {iface} inet {ip} netmask {mask}; ",
                 epair = epair,
                 ip = self.ip,
                 mask = self.netmask,
@@ -173,7 +173,7 @@ impl NIC {
         } else {
             format!(
                 "/sbin/ifconfig {epair}b name {iface}; \
-                /sbin/ifconfig {iface} inet {ip} {mask}; ",
+                /sbin/ifconfig {iface} inet {ip} netmask {mask}; ",
                 epair = epair,
                 ip = self.ip,
                 mask = self.netmask,
