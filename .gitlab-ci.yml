@@ -51,4 +51,4 @@ test:
   script:
     - cargo test
   tags:
-    - gitlab-org-high-cpu
+    - docker
