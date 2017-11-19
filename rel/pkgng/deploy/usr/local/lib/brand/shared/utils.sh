@@ -95,3 +95,12 @@ expand_linked() {
         ldd -a "${file}" 2> /dev/null | awk '/=>/{print $(NF-1)}'
     done
 }
+
+read_routes() {
+    while read route gw
+    do
+        /sbin/route add "$route" -gateway "$gw"
+        echo "route: $route"
+        echo "gw: $gw"
+    done < "/config/routes"
+}

@@ -115,6 +115,20 @@ impl<'a> Jail<'a> {
                 resolver_file.write_all(b"\n")?;
             }
         }
+        if ! self.config.routes.is_empty() {
+            let mut routes = config.clone();
+            routes.push("routes");
+            debug!("preparing routes file";
+                   "vm" => self.idx.uuid.hyphenated().to_string(),
+                   "file" => routes.to_str());
+            let mut routes_file = File::create(routes)?;
+            for (dest, gw) in self.config.routes.iter() {
+                routes_file.write_all(dest.as_bytes())?;
+                routes_file.write_all(b"\t")?;
+                routes_file.write_all(gw.as_bytes())?;
+                routes_file.write_all(b"\n")?;
+            }
+        }
         match self.config.customer_metadata.get("root_authorized_keys") {
             None => (),
             Some(keys) => {

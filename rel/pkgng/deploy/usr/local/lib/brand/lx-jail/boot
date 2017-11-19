@@ -12,6 +12,7 @@ hostname="$3"
 
 distro=$(detect_distro "/jail")
 
+read_routes
 
 if [ "${distro}" = "redhat" ]
 then

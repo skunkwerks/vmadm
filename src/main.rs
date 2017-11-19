@@ -73,7 +73,7 @@ mod config;
 use config::Config;
 
 mod errors;
-use errors::GenericError;
+use errors::{GenericError, ValidationErrors};
 
 /// Custom Drain logic
 struct RuntimeLevelFilter<D> {
@@ -378,11 +378,11 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
     let jail = match value_t!(matches, "file", String) {
         Err(_) => {
             debug!("Reading from STDIN");
-            jail_config::JailConfig::from_reader(conf, io::stdin())?
+            jail_config::JailConfig::from_reader(io::stdin())?
         }
         Ok(file) => {
             debug!("Reading from file"; "file" => file.clone() );
-            jail_config::JailConfig::from_reader(conf, File::open(file)?)?
+            jail_config::JailConfig::from_reader(File::open(file)?)?
         }
     };
     let mut dataset = conf.settings.pool.clone();
@@ -404,7 +404,7 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
         conf,
         uuid: jail.uuid.clone(),
         dataset,
-        config: jail,
+        config: jail.clone(),
         entry: None,
         snapshot: None,
         root: None,
@@ -573,13 +573,18 @@ fn create(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> 
         Adventure::new(init_up, init_down),
         Adventure::new(brand_install_up, brand_install_down),
     ]);
-    match saga.tell(state) {
-        Ok(state) => {
-            println!("Created jail {}", state.uuid);
-            Ok(0)
-        }
-        Err(failure) => Err(failure.to_error()),
+    match jail.errors(conf) {
+        Some(errors) => Err(ValidationErrors::bx(errors)),
+        None => 
+            match saga.tell(state) {
+                Ok(state) => {
+                    println!("Created jail {}", state.uuid);
+                    Ok(0)
+                }
+                Err(failure) => Err(failure.to_error()),
+            }
     }
+
 }
 
 fn delete(conf: &Config, matches: &clap::ArgMatches) -> Result<i32, Box<Error>> {
