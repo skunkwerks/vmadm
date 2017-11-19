@@ -400,7 +400,7 @@ impl JailConfig {
                     "Invalid destination",
                 ))
             }
-            if !IP_RE.is_match(gw.as_str()) {
+            if !IP_RE.is_match(gw.as_str()) && !INTERFACE_RE.is_match(gw.as_str()) {
                 errors.push(ValidationError::new(
                     format!("routes {} -> {}", dest, gw).as_str(),
                     "Invalid gateway",
