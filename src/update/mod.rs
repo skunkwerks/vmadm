@@ -6,6 +6,7 @@ use serde_json;
 use uuid::Uuid;
 use jdb::IdxEntry;
 use zfs;
+use std::collections::BTreeMap as Map;
 
 macro_rules! update {
     ( $src:ident, $target:ident; $($field:ident),+)  => (
@@ -117,11 +118,15 @@ pub struct JailUpdate {
     package_version: Option<String>,
     #[serde(default = "empty_nics")]
     add_nics: Vec<NIC>,
-    #[serde(default = "empty_macs")]
+    #[serde(default = "empty_svec")]
     remove_nics: Vec<String>,
     #[serde(default = "empty_nic_update")]
     update_nics: Vec<NICUpdate>,
 
+    #[serde(default = "empty_svec")]
+    remove_routes: Vec<String>,
+    #[serde(default = "empty_map")]
+    set_routes: Map<String, String>,
 }
 
 impl JailUpdate {
@@ -155,7 +160,8 @@ impl JailUpdate {
             add_nics: vec![],
             remove_nics: vec![],
             update_nics: vec![],
-
+            remove_routes: vec![],
+            set_routes: Map::new()
         }
     }
     pub fn apply(&self, config: JailConfig, index: &IdxEntry) -> Result<JailConfig, Box<Error>> {
@@ -194,21 +200,27 @@ impl JailUpdate {
                     }).collect(),
                 _ => c.nics.iter().map(|nic| update.apply(nic.clone())).collect()
             };
-
-
-
         }
 
         if self.quota.is_some() {
             zfs::quota(index.root.as_str(), self.quota.unwrap())?;
+        }
+        for remove_route in self.remove_routes.iter() {
+            c.routes.remove(remove_route);
+        }
+        for (route, gw) in self.set_routes.iter() {
+            c.routes.insert(route.clone(), gw.clone());
         }
         return Ok(c);
     }
 }
 
 
+fn empty_map() -> Map<String, String> {
+    Map::new()
+}
 
-fn empty_macs() -> Vec<String> {
+fn empty_svec() -> Vec<String> {
     Vec::new()
 }
 
@@ -300,6 +312,7 @@ mod tests {
             resolvers: Vec::new(),
             customer_metadata: Map::new(),
             internal_metadata: Map::new(),
+            routes: Map::new(),
         }
     }
 
@@ -447,6 +460,52 @@ mod tests {
 
         assert_eq!(false, conf1.nics[0].primary);
         assert_eq!(true, conf1.nics[1].primary);
+    }
+
+
+    #[test]
+    fn set_routes() {
+        let conf = conf();
+        let mut update = JailUpdate::empty();
+        let target = String::from("10.0.0.0/24");
+        let gw = String::from("10.0.1.0");
+        update.set_routes.insert(target.clone(), gw.clone());
+        let updated = update.apply(conf, &IdxEntry::empty()).unwrap();
+        assert!(!updated.routes.is_empty());
+        assert_eq!(&gw, updated.routes.get(&target).unwrap());
+    }
+
+    #[test]
+    fn reset_routes() {
+        let mut conf = conf();
+        let mut update = JailUpdate::empty();
+        let target = String::from("10.0.0.0/24");
+        let gw = String::from("10.0.1.0");
+        let gw2 = String::from("10.0.2.0");
+        conf.routes.insert(target.clone(), gw.clone());
+        update.set_routes.insert(target.clone(), gw2.clone());
+        let updated = update.apply(conf, &IdxEntry::empty()).unwrap();
+        assert!(!updated.routes.is_empty());
+        assert_eq!(&gw2, updated.routes.get(&target).unwrap());
+    }
+
+    #[test]
+    fn remove_routes() {
+        let mut conf = conf();
+        let mut update = JailUpdate::empty();
+        let target = String::from("10.0.0.0/24");
+        let gw = String::from("10.0.1.0");
+        conf.routes.insert(target.clone(), gw);
+        update.remove_routes = vec![target];
+        assert!(update.apply(conf, &IdxEntry::empty()).unwrap().routes.is_empty());
+    }
+    #[test]
+    fn remove_routes_not_found() {
+        let conf = conf();
+        let mut update = JailUpdate::empty();
+        let target = String::from("10.0.0.0/24");
+        update.remove_routes = vec![target];
+        assert!(update.apply(conf, &IdxEntry::empty()).unwrap().routes.is_empty());
     }
 
     // nic update tests

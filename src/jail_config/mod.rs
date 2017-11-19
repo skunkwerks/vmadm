@@ -3,12 +3,11 @@
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
-#[cfg(target_os = "freebsd")]
 use std::process::Command;
 #[cfg(target_os = "freebsd")]
 use errors::GenericError;
 
-use errors::{ValidationError, ValidationErrors};
+use errors::ValidationError;
 use config::Config;
 
 use serde_json;
@@ -266,6 +265,8 @@ pub struct JailConfig {
     /// Version of the package used for this jail
     #[serde(skip_serializing_if = "Option::is_none")]
     pub package_version: Option<String>,
+    #[serde(default = "empty_map")]
+    pub routes: Map<String, String>,
     // TODO:
     #[serde(default = "empty_map")]
     pub customer_metadata: Map<String, String>,
@@ -298,6 +299,7 @@ impl PartialEq for JailConfig {
             self.indestructible_zoneroot == other.indestructible_zoneroot &&
             self.owner_uuid == other.owner_uuid &&
             self.package_name == other.package_name &&
+            self.routes == other.routes &&
             self.package_version == other.package_version
     }
 }
@@ -306,19 +308,20 @@ lazy_static! {
   static ref HOSTNAME_RE: Regex = Regex::new("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?$").unwrap();
   static ref ALIAS_RE: Regex = Regex::new("^[a-zA-Z0-9]([a-zA-Z0-9-]{0,253}[a-zA-Z0-9])?$").unwrap();
   static ref INTERFACE_RE: Regex = Regex::new("^[a-zA-Z]{1,4}[0-9]{0,3}$").unwrap();
-  static ref IP_RE: Regex = Regex::new("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$").unwrap();
+    static ref IP_RE: Regex = Regex::new("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$").unwrap();
+    static ref NET_RE: Regex = Regex::new("^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(/((3[0-2])|([12][0-9])|[0-9]))?$").unwrap();
   static ref MAC_RE: Regex = Regex::new("^[a-fA-F0-9]{1,2}([:][a-fA-F0-9]{1,2}){5}$").unwrap();
 }
 
 impl JailConfig {
     /// Reads a new config from a file
-    pub fn from_file(config: &Config, config_path: &str) -> Result<Self, Box<Error>> {
+    pub fn from_file(config_path: &str) -> Result<Self, Box<Error>> {
         let config_file = File::open(config_path)?;
-        JailConfig::from_reader(config, config_file)
+        JailConfig::from_reader(config_file)
     }
 
     /// Reads the config from a reader
-    pub fn from_reader<R>(config: &Config, reader: R) -> Result<Self, Box<Error>>
+    pub fn from_reader<R>(reader: R) -> Result<Self, Box<Error>>
     where
         R: Read,
     {
@@ -330,10 +333,7 @@ impl JailConfig {
         if conf.max_locked_memory.is_none() {
             conf.max_locked_memory = Some(max_physical_memory);
         }
-        match conf.errors(config) {
-            Some(errors) => Err(ValidationErrors::bx(errors)),
-            None => Ok(conf),
-        }
+        Ok(conf)
     }
     /// checks the config for errors
     pub fn errors(&self, config: &Config) -> Option<Vec<ValidationError>> {
@@ -392,6 +392,20 @@ impl JailConfig {
 
             }
             i = i + 1;
+        }
+        for (dest, gw) in self.routes.iter() {
+            if !NET_RE.is_match(dest.as_str()) {
+                errors.push(ValidationError::new(
+                    format!("routes {} -> {}", dest, gw).as_str(),
+                    "Invalid destination",
+                ))
+            }
+            if !IP_RE.is_match(gw.as_str()) {
+                errors.push(ValidationError::new(
+                    format!("routes {} -> {}", dest, gw).as_str(),
+                    "Invalid gateway",
+                ))
+            }
         }
         if errors.is_empty() {
             None
@@ -506,4 +520,3 @@ fn checkip(ipaddr: &str) -> bool {
 	.expect("failed to ping");
     output.status.success() 
 }
-

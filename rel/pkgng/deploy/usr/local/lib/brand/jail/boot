@@ -8,7 +8,9 @@ uuid="$2"
 hostname="$3"
 
 # include shared utility functions
-. ${brand_root}/../shared/utils.sh
+. "${brand_root}/../shared/utils.sh"
+
+read_routes
 
 # create
 jail -c persist \
