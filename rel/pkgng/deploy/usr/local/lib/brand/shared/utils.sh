@@ -99,8 +99,16 @@ expand_linked() {
 read_routes() {
     while read route gw
     do
-        /sbin/route add "$route" -gateway "$gw"
-        echo "route: $route"
-        echo "gw: $gw"
+        if ifconfig "${gw}" 2> /dev/null
+        then
+            /sbin/route add "${route}" -iface "${gw}"
+            echo "route: $route"
+            echo "gw: $gw"
+        else
+            /sbin/route add "${route}" -gateway "${gw}"
+            echo "route: $route"
+            echo "gw: $gw"
+        fi
+
     done < "/config/routes"
 }
