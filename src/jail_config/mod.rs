@@ -132,7 +132,7 @@ impl NIC {
             )
         };
         if self.primary {
-            let route = format!("/sbin/route add default -gateway {}; ", self.gateway);
+            let route = format!("/sbin/route add default {}; ", self.gateway);
             script.push_str(route.as_str())
         }
         let mut desc = String::from("VNic from jail ");
