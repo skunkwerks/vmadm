@@ -131,10 +131,6 @@ impl NIC {
                 iface = self.interface
             )
         };
-        if self.primary {
-            let route = format!("/sbin/route add default -gateway {}; ", self.gateway);
-            script.push_str(route.as_str())
-        }
         let mut desc = String::from("VNic from jail ");
         desc.push_str(uuid.hyphenated().to_string().as_str());
         let output = Command::new(IFCONFIG)

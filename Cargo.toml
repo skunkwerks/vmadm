@@ -1,6 +1,6 @@
 [package]
 name = "vmadm"
-version = "0.3.7"
+version = "0.3.8"
 authors = ["Heinz N. Gies <heinz@project-fifo.net>"]
 
 [dependencies]
