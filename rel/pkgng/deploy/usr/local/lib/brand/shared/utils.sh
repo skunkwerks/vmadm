@@ -105,7 +105,7 @@ read_routes() {
             echo "route: $route"
             echo "gw: $gw"
         else
-            /sbin/route add "${route}" -gateway "${gw}"
+            /sbin/route add "${route}" "${gw}"
             echo "route: $route"
             echo "gw: $gw"
         fi
