@@ -97,6 +97,7 @@ expand_linked() {
 }
 
 read_routes() {
+    # we run the interface routes first
     while read route gw
     do
         if ifconfig "${gw}" 2> /dev/null
@@ -104,10 +105,15 @@ read_routes() {
             /sbin/route add "${route}" -iface "${gw}"
             echo "route: $route"
             echo "gw: $gw"
-        else
+        fi
+    done < "/config/routes"
+
+    # now we use network routes
+    while read route gw
+    do
+        if ! ifconfig "${gw}" 2> /dev/null
+        then
             /sbin/route add "${route}" "${gw}"
-            echo "route: $route"
-            echo "gw: $gw"
         fi
 
     done < "/config/routes"

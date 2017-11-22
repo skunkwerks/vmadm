@@ -76,25 +76,36 @@ impl<'a> Jail<'a> {
         let mut config = self.jail_root();
         config.push("config");
 
-        if ! self.config.routes.is_empty() {
+        {
             let mut routes = config.clone();
             routes.push("routes");
             debug!("preparing routes file";
                    "vm" => self.idx.uuid.hyphenated().to_string(),
                    "file" => routes.to_str());
             let mut routes_file = File::create(routes)?;
-            for (dest, gw) in self.config.routes.iter() {
-                routes_file.write_all(dest.as_bytes())?;
-                routes_file.write_all(b"\t")?;
-                routes_file.write_all(gw.as_bytes())?;
-                routes_file.write_all(b"\n")?;
+            if !self.config.routes.is_empty() {
+                for (dest, gw) in self.config.routes.iter() {
+                    routes_file.write_all(dest.as_bytes())?;
+                    routes_file.write_all(b"\t")?;
+                    routes_file.write_all(gw.as_bytes())?;
+                    routes_file.write_all(b"\n")?;
+                }
+            }
+
+            for nic in self.config.nics.clone() {
+                if nic.primary {
+                    routes_file.write_all(b"default")?;
+                    routes_file.write_all(b"\t")?;
+                    routes_file.write_all(nic.gateway.as_bytes())?;
+                    routes_file.write_all(b"\n")?;
+                }
             }
         }
-
 
         let id = start_jail(&self.idx.uuid, args)?;
         let id_str = id.to_string();
         let mut jprefix = String::from("j");
+
         jprefix.push_str(id_str.as_str());
         jprefix.push(':');
         for iface in ifs.iter() {
@@ -103,27 +114,27 @@ impl<'a> Jail<'a> {
             let mut target_name = jprefix.clone();
             target_name.push_str(iface.iface.as_str());
             let args = vec![epair, String::from("name"), target_name];
-            debug!("destroying epair";
+            debug!("renaming epair";
                    "vm" => self.idx.uuid.hyphenated().to_string(),
                    "args" => args.clone().join(" "));
             let output = Command::new(IFCONFIG).args(args.clone()).output().expect(
                 "ifconfig failed",
             );
             if !output.status.success() {
-                crit!("failed to destroy interface"; "vm" => self.idx.uuid.hyphenated().to_string());
+                crit!("failed to rename interface"; "vm" => self.idx.uuid.hyphenated().to_string());
             }
         }
         Ok(0)
     }
 
-    pub fn init(&self, _config: &Config)  -> Result<i32, Box<Error>> {
+    pub fn init(&self, _config: &Config) -> Result<i32, Box<Error>> {
         let mut config = self.jail_root();
         config.push("config");
         debug!("initializing jail";
                "dir" => config.to_str(),
                "vm" => self.idx.uuid.hyphenated().to_string());
         fs::create_dir(config.clone())?;
-        if ! self.config.resolvers.is_empty() {
+        if !self.config.resolvers.is_empty() {
             let mut resolvers = config.clone();
             resolvers.push("resolvers");
             debug!("preparing resolver file";
@@ -180,7 +191,9 @@ impl<'a> Jail<'a> {
             return Err(GenericError::bx("Could not stop jail"));
         }
 
-        brand.halted.output(self, config).expect("brand halted failed");;
+        brand.halted.output(self, config).expect(
+            "brand halted failed",
+        );;
 
         let _ = self.remove_rctl();
         match self.outer {
