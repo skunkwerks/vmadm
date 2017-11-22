@@ -83,6 +83,15 @@ impl<'a> Jail<'a> {
                    "vm" => self.idx.uuid.hyphenated().to_string(),
                    "file" => routes.to_str());
             let mut routes_file = File::create(routes)?;
+            for nic in self.config.nics.clone() {
+                if nic.primary {
+                    routes_file.write_all(b"default")?;
+                    routes_file.write_all(b"\t")?;
+                    routes_file.write_all(nic.gateway.as_bytes())?;
+                    routes_file.write_all(b"\n")?;
+                }
+            }
+
             if !self.config.routes.is_empty() {
                 for (dest, gw) in self.config.routes.iter() {
                     routes_file.write_all(dest.as_bytes())?;
@@ -92,14 +101,6 @@ impl<'a> Jail<'a> {
                 }
             }
 
-            for nic in self.config.nics.clone() {
-                if nic.primary {
-                    routes_file.write_all(b"default")?;
-                    routes_file.write_all(b"\t")?;
-                    routes_file.write_all(nic.gateway.as_bytes())?;
-                    routes_file.write_all(b"\n")?;
-                }
-            }
         }
 
         let id = start_jail(&self.idx.uuid, args)?;
